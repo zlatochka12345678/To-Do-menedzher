@@ -18,13 +18,10 @@ app.add_middleware(
 )
 
 DATA_FILE = "tasks.json"
-TEMPLATES_DIR = "templates"
 
-# Создаем структуру папок и пустую БД при старте
+# Создаём структуру папок и пустую БД при старте
 if not os.path.exists("static"):
     os.makedirs("static")
-if not os.path.exists(TEMPLATES_DIR):
-    os.makedirs(TEMPLATES_DIR)
 if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump([], f, ensure_ascii=False, indent=4)
@@ -55,17 +52,17 @@ def save_tasks(tasks):
 # ---------- Навигация между страницами ----------
 @app.get("/")
 def get_index():
-    return FileResponse(os.path.join(TEMPLATES_DIR, "index.html"))
+    return FileResponse("index.html")
 
 
 @app.get("/calendar")
 def get_calendar():
-    return FileResponse(os.path.join(TEMPLATES_DIR, "calendar.html"))
+    return FileResponse("calendar.html")
 
 
 @app.get("/group")
 def get_group():
-    return FileResponse(os.path.join(TEMPLATES_DIR, "group.html"))
+    return FileResponse("group.html")
 
 
 # ---------- REST API ----------

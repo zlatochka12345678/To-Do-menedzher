@@ -25,7 +25,6 @@ if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump([], f, ensure_ascii=False, indent=4)
 
-
 class Task(BaseModel):
     id: int = None
     title: str
@@ -34,7 +33,6 @@ class Task(BaseModel):
     deadline: str
     completed: bool = False
 
-
 def load_tasks():
     try:
         with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -42,51 +40,42 @@ def load_tasks():
     except (json.JSONDecodeError, FileNotFoundError):
         return []
 
-
 def save_tasks(tasks):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(tasks, f, ensure_ascii=False, indent=4)
-
 
 @app.get("/")
 def get_index():
     return FileResponse("index.html")
 
-
 @app.get("/calendar")
 def get_calendar():
     return FileResponse("calendar.html")
-
 
 @app.get("/group")
 def get_group():
     return FileResponse("group.html")
 
-
 @app.get("/api/tasks")
 def get_tasks():
     tasks = load_tasks()
-    try:
-        return sorted(
-            tasks,
-            key=lambda x: (
-                x.get("completed", False),
-                datetime.fromisoformat(x["deadline"]) if x.get("deadline") else datetime.max
-            )
-        )
-    except Exception:
-        return tasks
-
+    # Сортируем: сначала текущие, потом выполненные. Внутри — по времени дедлайна.
+    def sort_key(x):
+        try:
+            dt = datetime.fromisoformat(x["deadline"])
+        except:
+            dt = datetime.max
+        return (x.get("completed", False), dt)
+    return sorted(tasks, key=sort_key)
 
 @app.post("/api/tasks")
 def create_task(task: Task):
     tasks = load_tasks()
-    task_dict = task.dict()  # В pydantic 2.6.4 это ещё работает
+    task_dict = task.dict()
     task_dict["id"] = int(datetime.now().timestamp() * 1000)
     tasks.append(task_dict)
     save_tasks(tasks)
     return task_dict
-
 
 @app.patch("/api/tasks/{task_id}/toggle")
 def toggle_task(task_id: int):
@@ -98,7 +87,6 @@ def toggle_task(task_id: int):
             return task
     raise HTTPException(status_code=404, detail="Task not found")
 
-
 @app.delete("/api/tasks/{task_id}")
 def delete_task(task_id: int):
     tasks = load_tasks()
@@ -107,7 +95,6 @@ def delete_task(task_id: int):
         raise HTTPException(status_code=404, detail="Task not found")
     save_tasks(new_tasks)
     return {"status": "success"}
-
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

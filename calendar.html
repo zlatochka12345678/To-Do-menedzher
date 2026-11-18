@@ -5,6 +5,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>IT.TEAM — Календарь</title>
     <link rel="stylesheet" href="static/style.css">
+    <style>
+        /* Гарантированное отображение сетки и цветных точек */
+        #calendarGrid {
+            display: grid !important;
+            grid-template-columns: repeat(7, 1fr) !important;
+            gap: 4px !important;
+            align-items: center;
+        }
+        .cal-weekday {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0.6;
+            padding: 6px 0;
+        }
+        .cal-day {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 44px !important;
+            height: auto !important;
+            padding: 6px 2px !important;
+            border-radius: 10px;
+            cursor: pointer;
+            overflow: visible !important;
+            position: relative;
+        }
+        .cal-day.empty {
+            cursor: default;
+        }
+        .cal-day.today:not(.selected) {
+            border: 1.5px solid #2563eb;
+            font-weight: 700;
+        }
+        .cal-day.selected {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        .cal-day-num {
+            line-height: 1.2;
+            font-size: 14px;
+        }
+        .cal-dots {
+            display: flex !important;
+            justify-content: center;
+            align-items: center;
+            gap: 3px;
+            height: 8px;
+            margin-top: 3px;
+        }
+        .cal-dot {
+            width: 6px !important;
+            height: 6px !important;
+            border-radius: 50% !important;
+            display: inline-block !important;
+            flex-shrink: 0;
+        }
+        .cal-dot.overdue { background-color: #ef4444 !important; }   /* Красная: просрочено */
+        .cal-dot.soon { background-color: #f59e0b !important; }      /* Оранжевая: < 24 часов */
+        .cal-dot.active { background-color: #3b82f6 !important; }    /* Синяя: в работе */
+        .cal-dot.completed { background-color: #10b981 !important; } /* Зеленая: выполнено */
+
+        .cal-day.selected .cal-dot {
+            box-shadow: 0 0 0 1.5px #ffffff;
+        }
+    </style>
 </head>
 <body>
     <div class="phone-container">
@@ -19,7 +87,7 @@
             </div>
             <div class="main-nav">
                 <h1>Календарь</h1>
-                <button class="small-btn">Сегодня</button>
+                <button class="small-btn" id="todayBtn">Сегодня</button>
             </div>
         </header>
 
@@ -34,7 +102,7 @@
             <div class="calendar-grid" id="calendarGrid"></div>
         </div>
 
-        <div class="calendar-section-title" id="calendarDayTitle">16 ноября — сегодня</div>
+        <div class="calendar-section-title" id="calendarDayTitle">Задачи на день</div>
         <ul class="task-list calendar-task-list" id="calendarTaskList"></ul>
 
         <nav class="bottom-nav">

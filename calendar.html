@@ -72,6 +72,19 @@
         .cal-day.selected .cal-dot {
             box-shadow: 0 0 0 1px #ffffff;
         }
+        .calendar-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 18px 0 12px;
+        }
+        .calendar-section-header .calendar-section-title {
+            margin: 0 !important;
+        }
+        .calendar-day-count {
+            font-size: 13px;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
@@ -102,7 +115,10 @@
             <div class="calendar-grid" id="calendarGrid"></div>
         </div>
 
-        <div class="calendar-section-title" id="calendarDayTitle">Задачи на день</div>
+        <div class="calendar-section-header">
+            <div class="calendar-section-title" id="calendarDayTitle">18 ноября • сегодня</div>
+            <span class="calendar-day-count" id="calendarDayCount"></span>
+        </div>
         <ul class="task-list calendar-task-list" id="calendarTaskList"></ul>
 
         <nav class="bottom-nav">
@@ -118,6 +134,6 @@
         </nav>
     </div>
 
-    <script src="static/calendar.js"></script>
+    <script src="static/calendar.js?v=3"></script>
 </body>
 </html>

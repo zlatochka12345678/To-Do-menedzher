@@ -19,7 +19,6 @@ app.add_middleware(
 
 DATA_FILE = "tasks.json"
 
-# Создаем структуру папок и пустую БД при старте
 if not os.path.exists("static"):
     os.makedirs("static")
 if not os.path.exists(DATA_FILE):
@@ -28,7 +27,7 @@ if not os.path.exists(DATA_FILE):
 
 
 class Task(BaseModel):
-    id: int | None = None
+    id: int = None
     title: str
     subject: str
     priority: str
@@ -49,7 +48,6 @@ def save_tasks(tasks):
         json.dump(tasks, f, ensure_ascii=False, indent=4)
 
 
-# ---------- Навигация между страницами ----------
 @app.get("/")
 def get_index():
     return FileResponse("index.html")
@@ -65,31 +63,25 @@ def get_group():
     return FileResponse("group.html")
 
 
-# ---------- REST API ----------
 @app.get("/api/tasks")
 def get_tasks():
     tasks = load_tasks()
-    
-    def sort_key(task):
-        is_completed = task.get("completed", False)
-        try:
-            deadline_date = datetime.fromisoformat(task["deadline"])
-        except (ValueError, KeyError):
-            deadline_date = datetime.max
-        
-        return (is_completed, deadline_date)
-
     try:
-        return sorted(tasks, key=sort_key)
-    except Exception as e:
-        print(f"Ошибка сортировки: {e}")
+        return sorted(
+            tasks,
+            key=lambda x: (
+                x.get("completed", False),
+                datetime.fromisoformat(x["deadline"]) if x.get("deadline") else datetime.max
+            )
+        )
+    except Exception:
         return tasks
 
 
 @app.post("/api/tasks")
 def create_task(task: Task):
     tasks = load_tasks()
-    task_dict = task.model_dump()
+    task_dict = task.dict()  # В pydantic 2.6.4 это ещё работает
     task_dict["id"] = int(datetime.now().timestamp() * 1000)
     tasks.append(task_dict)
     save_tasks(tasks)
@@ -111,10 +103,8 @@ def toggle_task(task_id: int):
 def delete_task(task_id: int):
     tasks = load_tasks()
     new_tasks = [t for t in tasks if t["id"] != task_id]
-    
     if len(tasks) == len(new_tasks):
         raise HTTPException(status_code=404, detail="Task not found")
-        
     save_tasks(new_tasks)
     return {"status": "success"}
 

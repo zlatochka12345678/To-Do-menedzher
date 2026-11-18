@@ -10,14 +10,15 @@ async function loadTasks() {
     try {
         const res = await fetch(API_URL);
         allTasks = await res.json();
+        console.log("Загруженные задачи:", allTasks); // Отладка
     } catch (e) {
-        console.error("Ошибка загрузки задач для календаря:", e);
+        console.error("Ошибка загрузки задач:", e);
     }
     renderCalendar();
     renderDayTasks();
 }
 
-// Функция для получения чистой строки даты (YYYY-MM-DD)
+// Генерирует строку даты строго в формате YYYY-MM-DD без учета часовых поясов
 function getDateString(year, month, day) {
     const m = String(month + 1).padStart(2, '0');
     const d = String(day).padStart(2, '0');
@@ -41,13 +42,15 @@ function renderCalendar() {
         grid.appendChild(el);
     });
 
+    // Узнаем, с какого дня недели начинается месяц (1 - Пн, 7 - Вс)
     const firstDay = new Date(year, month, 1);
     let startWeekday = firstDay.getDay();
-    if (startWeekday === 0) startWeekday = 7; // Воскресенье - 7-й день
+    if (startWeekday === 0) startWeekday = 7;
+    
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const prevMonthDays = new Date(year, month, 0).getDate();
 
-    // Дни прошлого месяца (пустые ячейки)
+    // Пустые ячейки для прошлого месяца
     for (let i = startWeekday - 1; i > 0; i--) {
         const el = document.createElement("div");
         el.className = "calendar-day muted";
@@ -72,10 +75,11 @@ function renderCalendar() {
         if (cellDateString === todayString) el.classList.add("today");
         if (cellDateString === selectedString) el.classList.add("selected");
 
-        // Проверяем, есть ли задачи на этот день (ищем совпадение первых 10 символов даты)
+        // Ищем задачи на этот день
         const hasTasks = allTasks.some(task => {
             if (!task.deadline) return false;
-            return task.deadline.substring(0, 10) === cellDateString;
+            const taskDateStr = task.deadline.substring(0, 10); // "2026-11-19"
+            return taskDateStr === cellDateString;
         });
 
         if (hasTasks) {
@@ -105,11 +109,14 @@ function renderDayTasks() {
     const isToday = selectedString === todayString;
     title.textContent = `${dateStr} — ${isToday ? "сегодня" : "выбранный день"}`;
 
-    // Фильтруем задачи, сравнивая только дату (первые 10 символов строки дедлайна)
+    // Фильтруем по строкам
     const dayTasks = allTasks.filter((t) => {
         if (!t.deadline) return false;
-        return t.deadline.substring(0, 10) === selectedString;
+        const taskDateStr = t.deadline.substring(0, 10);
+        return taskDateStr === selectedString;
     });
+
+    console.log(`Задачи на ${selectedString}:`, dayTasks); // Отладка
 
     if (dayTasks.length === 0) {
         list.innerHTML = `<div class="empty-state">На этот день задач нет</div>`;
@@ -122,7 +129,7 @@ function renderDayTasks() {
         const li = document.createElement("li");
         li.className = `task-card prio-${task.priority} ${task.completed ? "completed-status" : ""}`;
         
-        // Берем время прямо из строки (символы с 11 по 16, например "06:50")
+        // Берем время из строки "YYYY-MM-DDTHH:MM"
         let time = "00:00";
         if (task.deadline.length >= 16) {
             time = task.deadline.substring(11, 16);
@@ -130,7 +137,6 @@ function renderDayTasks() {
         
         let timeClass = "";
         if (!task.completed && task.deadline) {
-            // Для цветовой индикации (просрочено/скоро) используем реальный объект Date
             const taskDate = new Date(task.deadline);
             const hoursLeft = (taskDate - now) / (1000 * 60 * 60);
             if (hoursLeft < 0) timeClass = "overdue";

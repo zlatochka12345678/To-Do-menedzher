@@ -6,7 +6,6 @@
     <title>IT.TEAM — Календарь</title>
     <link rel="stylesheet" href="static/style.css">
     <style>
-        /* Гарантированное отображение сетки и цветных точек */
         #calendarGrid {
             display: grid !important;
             grid-template-columns: repeat(7, 1fr) !important;
@@ -15,9 +14,9 @@
         }
         .cal-weekday {
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
-            opacity: 0.6;
+            opacity: 0.5;
             padding: 6px 0;
         }
         .cal-day {
@@ -28,20 +27,21 @@
             min-height: 44px !important;
             height: auto !important;
             padding: 6px 2px !important;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             overflow: visible !important;
             position: relative;
         }
-        .cal-day.empty {
+        .cal-day.other-month {
+            opacity: 0.3;
             cursor: default;
         }
         .cal-day.today:not(.selected) {
-            border: 1.5px solid #2563eb;
+            border: 1.5px solid #3b82f6;
             font-weight: 700;
         }
         .cal-day.selected {
-            background-color: #2563eb !important;
+            background-color: #3b82f6 !important;
             color: #ffffff !important;
             font-weight: 700;
         }
@@ -54,23 +54,23 @@
             justify-content: center;
             align-items: center;
             gap: 3px;
-            height: 8px;
+            height: 7px;
             margin-top: 3px;
         }
         .cal-dot {
-            width: 6px !important;
-            height: 6px !important;
+            width: 5px !important;
+            height: 5px !important;
             border-radius: 50% !important;
             display: inline-block !important;
             flex-shrink: 0;
         }
-        .cal-dot.overdue { background-color: #ef4444 !important; }   /* Красная: просрочено */
-        .cal-dot.soon { background-color: #f59e0b !important; }      /* Оранжевая: < 24 часов */
-        .cal-dot.active { background-color: #3b82f6 !important; }    /* Синяя: в работе */
-        .cal-dot.completed { background-color: #10b981 !important; } /* Зеленая: выполнено */
+        .cal-dot.overdue { background-color: #ef4444 !important; }
+        .cal-dot.soon { background-color: #f59e0b !important; }
+        .cal-dot.active { background-color: #3b82f6 !important; }
+        .cal-dot.completed { background-color: #10b981 !important; }
 
         .cal-day.selected .cal-dot {
-            box-shadow: 0 0 0 1.5px #ffffff;
+            box-shadow: 0 0 0 1px #ffffff;
         }
     </style>
 </head>

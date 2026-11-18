@@ -6,7 +6,7 @@ const calendarDayTitle = document.getElementById("calendarDayTitle");
 const calendarTaskList = document.getElementById("calendarTaskList");
 const prevMonthBtn = document.getElementById("prevMonth");
 const nextMonthBtn = document.getElementById("nextMonth");
-const todayBtn = document.querySelector(".small-btn");
+const todayBtn = document.getElementById("todayBtn");
 
 const monthNames = [
     "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
@@ -21,15 +21,16 @@ const monthNamesGenitive = [
 const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const prioLabels = { high: "Высокий", medium: "Средний", low: "Низкий" };
 
-let currentDate = new Date();
-let viewYear = currentDate.getFullYear();
-let viewMonth = currentDate.getMonth();
-let selectedDateStr = formatDateKey(currentDate);
+let nowDate = new Date();
+let viewYear = nowDate.getFullYear();
+let viewMonth = nowDate.getMonth();
+let selectedDateStr = formatDateKey(nowDate);
 
 function loadTasks() {
     try {
-        const data = localStorage.getItem(STORAGE_KEY);
-        return data ? JSON.parse(data) : [];
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("it_team_tasks") || "[]";
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
         return [];
     }
@@ -46,20 +47,46 @@ function formatDateKey(date) {
     return `${y}-${m}-${d}`;
 }
 
+// Безопасное извлечение даты в формате YYYY-MM-DD
+function extractDateKey(deadlineStr) {
+    if (!deadlineStr) return "";
+    const str = String(deadlineStr).trim();
+
+    // Если формат YYYY-MM-DD или YYYY-MM-DDTHH:MM
+    const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+        return `${isoMatch}-${isoMatch}-${isoMatch}`;
+    }
+
+    // Если формат DD.MM.YYYY
+    const ruMatch = str.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+    if (ruMatch) {
+        return `${ruMatch}-${ruMatch}-${ruMatch}`;
+    }
+
+    const parsed = new Date(str);
+    if (!isNaN(parsed.getTime())) {
+        return formatDateKey(parsed);
+    }
+    return "";
+}
+
 function escapeHTML(str) {
     return String(str).replace(/[&<>'"]/g, (tag) =>
         ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[tag] || tag)
     );
 }
 
-// Определяем цвет точки для конкретной задачи
-function getTaskStatusColor(task, now) {
-    if (task.completed) return "#10b981"; // Зеленый — выполнено
+// Определяем класс статуса для цветной точки
+function getStatusClass(task, now) {
+    if (task.completed) return "completed";
     const deadline = new Date(task.deadline);
-    const hoursLeft = (deadline - now) / (1000 * 60 * 60);
-    if (hoursLeft < 0) return "#ef4444";  // Красный — просрочено
-    if (hoursLeft <= 24) return "#f59e0b"; // Оранжевый — срочно (<= 24ч)
-    return "#3b82f6";                      // Синий — в работе
+    if (!isNaN(deadline.getTime())) {
+        const hoursLeft = (deadline - now) / (1000 * 60 * 60);
+        if (hoursLeft < 0) return "overdue";
+        if (hoursLeft <= 24) return "soon";
+    }
+    return "active";
 }
 
 function renderCalendar() {
@@ -73,65 +100,53 @@ function renderCalendar() {
     // Заголовки дней недели
     weekDays.forEach((day) => {
         const wd = document.createElement("div");
-        wd.className = "calendar-weekday";
+        wd.className = "cal-weekday";
         wd.textContent = day;
         calendarGrid.appendChild(wd);
     });
 
-    const firstDay = new Date(viewYear, viewMonth, 1);
-    let startOffset = firstDay.getDay() - 1;
-    if (startOffset < 0) startOffset = 6; // Воскресенье -> 6
-
+    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+    const startOffset = firstDay === 0 ? 6 : firstDay - 1;
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-    // Пустые ячейки до 1-го числа
+    // Пустые клетки в начале месяца
     for (let i = 0; i < startOffset; i++) {
         const empty = document.createElement("div");
-        empty.className = "calendar-day empty";
+        empty.className = "cal-day empty";
         calendarGrid.appendChild(empty);
     }
 
-    // Дни месяца
+    // Ячейки с днями
     for (let day = 1; day <= daysInMonth; day++) {
         const dateObj = new Date(viewYear, viewMonth, day);
         const dateKey = formatDateKey(dateObj);
 
         const cell = document.createElement("div");
-        cell.className = "calendar-day";
+        cell.className = "cal-day";
         if (dateKey === todayKey) cell.classList.add("today");
         if (dateKey === selectedDateStr) cell.classList.add("selected");
 
-        // Число
         const numSpan = document.createElement("span");
-        numSpan.className = "day-number";
+        numSpan.className = "cal-day-num";
         numSpan.textContent = day;
         cell.appendChild(numSpan);
 
-        // Ищем все задачи на эту дату
-        const dayTasks = tasks.filter((t) => t.deadline && t.deadline.startsWith(dateKey));
+        // Находим задачи на этот день
+        const dayTasks = tasks.filter((t) => extractDateKey(t.deadline) === dateKey);
+
+        const dotsWrap = document.createElement("div");
+        dotsWrap.className = "cal-dots";
 
         if (dayTasks.length > 0) {
-            const dotsContainer = document.createElement("div");
-            dotsContainer.className = "status-dots";
-            dotsContainer.style.display = "flex";
-            dotsContainer.style.justifyContent = "center";
-            dotsContainer.style.gap = "3px";
-            dotsContainer.style.marginTop = "3px";
-
-            // Показываем до 4 цветных точек статусов задач за этот день
             dayTasks.slice(0, 4).forEach((task) => {
                 const dot = document.createElement("span");
-                dot.className = "status-dot";
-                dot.style.width = "6px";
-                dot.style.height = "6px";
-                dot.style.borderRadius = "50%";
-                dot.style.display = "inline-block";
-                dot.style.backgroundColor = getTaskStatusColor(task, now);
-                dotsContainer.appendChild(dot);
+                const statusClass = getStatusClass(task, now);
+                dot.className = `cal-dot ${statusClass}`;
+                dotsWrap.appendChild(dot);
             });
-
-            cell.appendChild(dotsContainer);
         }
+
+        cell.appendChild(dotsWrap);
 
         cell.addEventListener("click", () => {
             selectedDateStr = dateKey;
@@ -153,7 +168,7 @@ function renderDayTasks() {
     calendarDayTitle.textContent = selectedDateStr === todayKey ? `${titlePrefix} — сегодня` : titlePrefix;
 
     const dayTasks = tasks
-        .filter((t) => t.deadline && t.deadline.startsWith(selectedDateStr))
+        .filter((t) => extractDateKey(t.deadline) === selectedDateStr)
         .sort((a, b) => {
             if (Boolean(a.completed) !== Boolean(b.completed)) return a.completed ? 1 : -1;
             return new Date(a.deadline) - new Date(b.deadline);
@@ -175,15 +190,19 @@ function renderDayTasks() {
         let timeText = "";
 
         if (!task.completed) {
-            const hoursLeft = (deadline - now) / (1000 * 60 * 60);
-            if (hoursLeft < 0) {
-                li.classList.add("deadline-danger");
-                timeClass = "overdue";
-            } else if (hoursLeft <= 24) {
-                li.classList.add("deadline-warning");
-                timeClass = "soon";
+            if (!isNaN(deadline.getTime())) {
+                const hoursLeft = (deadline - now) / (1000 * 60 * 60);
+                if (hoursLeft < 0) {
+                    li.classList.add("deadline-danger");
+                    timeClass = "overdue";
+                } else if (hoursLeft <= 24) {
+                    li.classList.add("deadline-warning");
+                    timeClass = "soon";
+                }
+                timeText = deadline.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+            } else {
+                timeText = task.deadline;
             }
-            timeText = deadline.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
         } else {
             timeText = "Выполнено";
         }
@@ -242,6 +261,22 @@ if (todayBtn) {
         renderCalendar();
         renderDayTasks();
     });
+}
+
+// Автоматически открываем месяц с задачей, если она назначена на другой месяц
+const initialTasks = loadTasks();
+if (initialTasks.length > 0) {
+    const currentMonthPrefix = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`;
+    const hasInCurrent = initialTasks.some((t) => extractDateKey(t.deadline).startsWith(currentMonthPrefix));
+    if (!hasInCurrent) {
+        const firstDateKey = extractDateKey(initialTasks.deadline);
+        if (firstDateKey) {
+            const [y, m] = firstDateKey.split("-").map(Number);
+            viewYear = y;
+            viewMonth = m - 1;
+            selectedDateStr = firstDateKey;
+        }
+    }
 }
 
 renderCalendar();

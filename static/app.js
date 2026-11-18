@@ -33,14 +33,15 @@ priorityGroup.addEventListener("click", (e) => {
 async function fetchTasks() {
     try {
         const response = await fetch(API_URL);
+        if (!response.ok) throw new Error("Сервер не отвечает");
         allTasks = await response.json();
         renderTasks(allTasks);
     } catch (error) {
         console.error("Ошибка синхронизации данных:", error);
+        taskList.innerHTML = `<div class="empty-state">Нет связи с сервером. Запустите python main.py</div>`;
     }
 }
 
-// Исправленная логика создания задачи
 taskForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     
@@ -57,20 +58,18 @@ taskForm.addEventListener("submit", async (e) => {
             body: JSON.stringify({ title, subject, priority: selectedPriority, deadline }),
         });
 
-        if (!response.ok) throw new Error("Ошибка при сохранении на сервере");
+        if (!response.ok) throw new Error("Ошибка сохранения");
 
-        // Очищаем форму и закрываем модалку только после успешного сохранения
         modalOverlay.classList.remove("open");
         taskForm.reset();
         selectedPriority = "medium";
         priorityGroup.querySelectorAll(".prio-btn").forEach((b) => b.classList.remove("active"));
         priorityGroup.querySelector('[data-prio="medium"]').classList.add("active");
         
-        // Обновляем список
         fetchTasks();
     } catch (error) {
         console.error("Ошибка создания задачи:", error);
-        alert("Не удалось сохранить задачу. Попробуйте ещё раз.");
+        alert("Не удалось сохранить задачу. Проверьте, запущен ли сервер (python main.py).");
     }
 });
 

@@ -3,10 +3,11 @@ const STORAGE_KEY = "it_team_tasks_storage";
 const calendarGrid = document.getElementById("calendarGrid");
 const calendarMonth = document.getElementById("calendarMonth");
 const calendarDayTitle = document.getElementById("calendarDayTitle");
+const calendarDayCount = document.getElementById("calendarDayCount");
 const calendarTaskList = document.getElementById("calendarTaskList");
 const prevMonthBtn = document.getElementById("prevMonth");
 const nextMonthBtn = document.getElementById("nextMonth");
-const todayBtn = document.getElementById("todayBtn") || document.querySelector(".small-btn");
+const todayBtn = document.getElementById("todayBtn");
 
 const monthNames = [
     "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
@@ -28,7 +29,7 @@ let selectedDateStr = formatDateKey(nowDate);
 
 function loadTasks() {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("it_team_tasks") || "[]";
+        const raw = localStorage.getItem(STORAGE_KEY) || "[]";
         const parsed = JSON.parse(raw);
         return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
@@ -47,23 +48,12 @@ function formatDateKey(date) {
     return `${y}-${m}-${d}`;
 }
 
-// Исправленное извлечение даты в формате YYYY-MM-DD
 function extractDateKey(deadlineStr) {
     if (!deadlineStr) return "";
     const str = String(deadlineStr).trim();
-
-    // Формат YYYY-MM-DD или YYYY-MM-DDTHH:MM
-    const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (isoMatch) {
-        return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+    if (str.length >= 10 && str.charAt(4) === "-" && str.charAt(7) === "-") {
+        return str.substring(0, 10);
     }
-
-    // Формат DD.MM.YYYY
-    const ruMatch = str.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
-    if (ruMatch) {
-        return `${ruMatch[3]}-${ruMatch[2]}-${ruMatch[1]}`;
-    }
-
     const parsed = new Date(str);
     if (!isNaN(parsed.getTime())) {
         return formatDateKey(parsed);
@@ -77,7 +67,6 @@ function escapeHTML(str) {
     );
 }
 
-// Определяем класс статуса для цветной точки
 function getStatusClass(task, now) {
     if (task.completed) return "completed";
     const deadline = new Date(task.deadline);
@@ -89,6 +78,14 @@ function getStatusClass(task, now) {
     return "active";
 }
 
+function getTaskWord(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return `${count} задача`;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return `${count} задачи`;
+    return `${count} задач`;
+}
+
 function renderCalendar() {
     const tasks = loadTasks();
     const now = new Date();
@@ -97,7 +94,6 @@ function renderCalendar() {
     calendarMonth.textContent = `${monthNames[viewMonth]} ${viewYear}`;
     calendarGrid.innerHTML = "";
 
-    // Заголовки дней недели
     weekDays.forEach((day) => {
         const wd = document.createElement("div");
         wd.className = "cal-weekday";
@@ -109,7 +105,6 @@ function renderCalendar() {
     const startOffset = firstDay === 0 ? 6 : firstDay - 1;
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-    // Дни предыдущего месяца (серые числа в начале сетки, как на 2 скриншоте)
     const prevMonthDays = new Date(viewYear, viewMonth, 0).getDate();
     for (let i = startOffset - 1; i >= 0; i--) {
         const prevDayNum = prevMonthDays - i;
@@ -119,7 +114,6 @@ function renderCalendar() {
         calendarGrid.appendChild(empty);
     }
 
-    // Дни текущего месяца
     for (let day = 1; day <= daysInMonth; day++) {
         const dateObj = new Date(viewYear, viewMonth, day);
         const dateKey = formatDateKey(dateObj);
@@ -134,7 +128,6 @@ function renderCalendar() {
         numSpan.textContent = day;
         cell.appendChild(numSpan);
 
-        // Находим задачи на этот день
         const dayTasks = tasks.filter((t) => extractDateKey(t.deadline) === dateKey);
 
         const dotsWrap = document.createElement("div");
@@ -160,7 +153,6 @@ function renderCalendar() {
         calendarGrid.appendChild(cell);
     }
 
-    // Дни следующего месяца (серые числа в конце сетки)
     const totalCells = startOffset + daysInMonth;
     const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
     for (let nextDay = 1; nextDay <= remainingCells; nextDay++) {
@@ -176,7 +168,9 @@ function renderDayTasks() {
     const now = new Date();
     const todayKey = formatDateKey(now);
 
-    const [y, m, d] = selectedDateStr.split("-").map(Number);
+    const parts = selectedDateStr.split("-");
+    const d = Number(parts.pop());
+    const m = Number(parts.pop());
     const titlePrefix = `${d} ${monthNamesGenitive[m - 1]}`;
     calendarDayTitle.textContent = selectedDateStr === todayKey ? `${titlePrefix} • сегодня` : titlePrefix;
 
@@ -186,6 +180,10 @@ function renderDayTasks() {
             if (Boolean(a.completed) !== Boolean(b.completed)) return a.completed ? 1 : -1;
             return new Date(a.deadline) - new Date(b.deadline);
         });
+
+    if (calendarDayCount) {
+        calendarDayCount.textContent = dayTasks.length > 0 ? getTaskWord(dayTasks.length) : "";
+    }
 
     calendarTaskList.innerHTML = "";
 

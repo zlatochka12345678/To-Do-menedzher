@@ -69,14 +69,28 @@ def get_group():
 @app.get("/api/tasks")
 def get_tasks():
     tasks = load_tasks()
-    return sorted(tasks, key=lambda x: (x["completed"], datetime.fromisoformat(x["deadline"])))
+    # Сортировка: сначала невыполненные по дедлайну (самые близкие вверху), затем выполненные
+    try:
+        return sorted(
+            tasks,
+            key=lambda x: (
+                x.get("completed", False),
+                datetime.fromisoformat(x["deadline"]) if x.get("deadline") else datetime.max
+            )
+        )
+    except Exception as e:
+        print(f"Ошибка сортировки: {e}")
+        return tasks
 
 
 @app.post("/api/tasks")
 def create_task(task: Task):
     tasks = load_tasks()
     task_dict = task.dict()
-    task_dict["id"] = int(datetime.utcnow().timestamp() * 1000)
+    
+    # Генерируем уникальный ID на основе текущего времени (миллисекунды)
+    task_dict["id"] = int(datetime.now().timestamp() * 1000)
+    
     tasks.append(task_dict)
     save_tasks(tasks)
     return task_dict

@@ -6,7 +6,7 @@ const calendarDayTitle = document.getElementById("calendarDayTitle");
 const calendarTaskList = document.getElementById("calendarTaskList");
 const prevMonthBtn = document.getElementById("prevMonth");
 const nextMonthBtn = document.getElementById("nextMonth");
-const todayBtn = document.getElementById("todayBtn");
+const todayBtn = document.getElementById("todayBtn") || document.querySelector(".small-btn");
 
 const monthNames = [
     "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
@@ -18,7 +18,7 @@ const monthNamesGenitive = [
     "июля", "августа", "сентября", "октября", "ноября", "декабря"
 ];
 
-const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const weekDays = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
 const prioLabels = { high: "Высокий", medium: "Средний", low: "Низкий" };
 
 let nowDate = new Date();
@@ -47,21 +47,21 @@ function formatDateKey(date) {
     return `${y}-${m}-${d}`;
 }
 
-// Безопасное извлечение даты в формате YYYY-MM-DD
+// Исправленное извлечение даты в формате YYYY-MM-DD
 function extractDateKey(deadlineStr) {
     if (!deadlineStr) return "";
     const str = String(deadlineStr).trim();
 
-    // Если формат YYYY-MM-DD или YYYY-MM-DDTHH:MM
+    // Формат YYYY-MM-DD или YYYY-MM-DDTHH:MM
     const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (isoMatch) {
-        return `${isoMatch}-${isoMatch}-${isoMatch}`;
+        return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
     }
 
-    // Если формат DD.MM.YYYY
+    // Формат DD.MM.YYYY
     const ruMatch = str.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
     if (ruMatch) {
-        return `${ruMatch}-${ruMatch}-${ruMatch}`;
+        return `${ruMatch[3]}-${ruMatch[2]}-${ruMatch[1]}`;
     }
 
     const parsed = new Date(str);
@@ -109,14 +109,17 @@ function renderCalendar() {
     const startOffset = firstDay === 0 ? 6 : firstDay - 1;
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-    // Пустые клетки в начале месяца
-    for (let i = 0; i < startOffset; i++) {
+    // Дни предыдущего месяца (серые числа в начале сетки, как на 2 скриншоте)
+    const prevMonthDays = new Date(viewYear, viewMonth, 0).getDate();
+    for (let i = startOffset - 1; i >= 0; i--) {
+        const prevDayNum = prevMonthDays - i;
         const empty = document.createElement("div");
-        empty.className = "cal-day empty";
+        empty.className = "cal-day other-month";
+        empty.innerHTML = `<span class="cal-day-num">${prevDayNum}</span><div class="cal-dots"></div>`;
         calendarGrid.appendChild(empty);
     }
 
-    // Ячейки с днями
+    // Дни текущего месяца
     for (let day = 1; day <= daysInMonth; day++) {
         const dateObj = new Date(viewYear, viewMonth, day);
         const dateKey = formatDateKey(dateObj);
@@ -156,6 +159,16 @@ function renderCalendar() {
 
         calendarGrid.appendChild(cell);
     }
+
+    // Дни следующего месяца (серые числа в конце сетки)
+    const totalCells = startOffset + daysInMonth;
+    const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (let nextDay = 1; nextDay <= remainingCells; nextDay++) {
+        const empty = document.createElement("div");
+        empty.className = "cal-day other-month";
+        empty.innerHTML = `<span class="cal-day-num">${nextDay}</span><div class="cal-dots"></div>`;
+        calendarGrid.appendChild(empty);
+    }
 }
 
 function renderDayTasks() {
@@ -165,7 +178,7 @@ function renderDayTasks() {
 
     const [y, m, d] = selectedDateStr.split("-").map(Number);
     const titlePrefix = `${d} ${monthNamesGenitive[m - 1]}`;
-    calendarDayTitle.textContent = selectedDateStr === todayKey ? `${titlePrefix} — сегодня` : titlePrefix;
+    calendarDayTitle.textContent = selectedDateStr === todayKey ? `${titlePrefix} • сегодня` : titlePrefix;
 
     const dayTasks = tasks
         .filter((t) => extractDateKey(t.deadline) === selectedDateStr)
@@ -192,14 +205,20 @@ function renderDayTasks() {
         if (!task.completed) {
             if (!isNaN(deadline.getTime())) {
                 const hoursLeft = (deadline - now) / (1000 * 60 * 60);
+                const timeStr = deadline.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+
                 if (hoursLeft < 0) {
                     li.classList.add("deadline-danger");
                     timeClass = "overdue";
+                    timeText = `${timeStr} • просрочено`;
                 } else if (hoursLeft <= 24) {
                     li.classList.add("deadline-warning");
                     timeClass = "soon";
+                    const hrs = Math.max(1, Math.round(hoursLeft));
+                    timeText = `${timeStr} • осталось ${hrs} ч.`;
+                } else {
+                    timeText = timeStr;
                 }
-                timeText = deadline.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
             } else {
                 timeText = task.deadline;
             }
@@ -261,22 +280,6 @@ if (todayBtn) {
         renderCalendar();
         renderDayTasks();
     });
-}
-
-// Автоматически открываем месяц с задачей, если она назначена на другой месяц
-const initialTasks = loadTasks();
-if (initialTasks.length > 0) {
-    const currentMonthPrefix = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`;
-    const hasInCurrent = initialTasks.some((t) => extractDateKey(t.deadline).startsWith(currentMonthPrefix));
-    if (!hasInCurrent) {
-        const firstDateKey = extractDateKey(initialTasks.deadline);
-        if (firstDateKey) {
-            const [y, m] = firstDateKey.split("-").map(Number);
-            viewYear = y;
-            viewMonth = m - 1;
-            selectedDateStr = firstDateKey;
-        }
-    }
 }
 
 renderCalendar();

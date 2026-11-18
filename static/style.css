@@ -285,7 +285,6 @@ body {
 .modal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
 .modal-header h3 { font-size: 1.15rem; flex-grow: 1; }
 .modal-back { background: none; border: none; color: var(--text-main); font-size: 1.6rem; cursor: pointer; line-height: 1; }
-.modal-step { font-size: 0.7rem; color: var(--text-muted); }
 
 .field-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: -6px; }
 .modal-content input,

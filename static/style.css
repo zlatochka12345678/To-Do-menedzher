@@ -366,16 +366,32 @@ body {
 .calendar-day {
     aspect-ratio: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
     border-radius: 8px;
     cursor: pointer;
     color: var(--text-main);
+    position: relative; /* Для точки */
 }
 .calendar-day.muted { color: #3b4060; cursor: default; }
 .calendar-day.today { border: 1px solid var(--accent-blue); }
 .calendar-day.selected { background: var(--accent-blue); color: #fff; }
+
+/* Точка под датой, если есть задачи */
+.calendar-dot {
+    width: 4px;
+    height: 4px;
+    background-color: var(--priority-medium);
+    border-radius: 50%;
+    position: absolute;
+    bottom: 4px;
+}
+.calendar-day.selected .calendar-dot {
+    background-color: #fff;
+}
+
 .calendar-section-title {
     font-size: 0.85rem;
     font-weight: 600;

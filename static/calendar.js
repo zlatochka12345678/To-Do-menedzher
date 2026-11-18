@@ -9,16 +9,32 @@ const dayNames = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
 async function loadTasks() {
     try {
         const res = await fetch(API_URL);
+        if (!res.ok) throw new Error("Сервер не отвечает");
+        
+        // Проверяем, что сервер вернул именно JSON, а не HTML
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new Error("Сервер вернул не JSON");
+        }
+
         allTasks = await res.json();
-        console.log("Загруженные задачи:", allTasks); // Отладка
+        console.log("Загруженные задачи:", allTasks);
     } catch (e) {
-        console.error("Ошибка загрузки задач:", e);
+        console.error("Ошибка загрузки задач для календаря:", e);
+        allTasks = []; // Сбрасываем задачи, чтобы не было ошибок
+        
+        // Показываем ошибку в интерфейсе, если сервер не запущен
+        document.getElementById("calendarTaskList").innerHTML = `
+            <div class="empty-state" style="color: #eb5757;">
+                Не удалось подключиться к серверу.<br>
+                Запустите сервер командой <b>python main.py</b> и откройте <b>http://127.0.0.1:8000</b>
+            </div>
+        `;
     }
     renderCalendar();
     renderDayTasks();
 }
 
-// Генерирует строку даты строго в формате YYYY-MM-DD без учета часовых поясов
 function getDateString(year, month, day) {
     const m = String(month + 1).padStart(2, '0');
     const d = String(day).padStart(2, '0');
@@ -28,13 +44,13 @@ function getDateString(year, month, day) {
 function renderCalendar() {
     const grid = document.getElementById("calendarGrid");
     const monthLabel = document.getElementById("calendarMonth");
+    if (!grid) return;
     grid.innerHTML = "";
 
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     monthLabel.textContent = `${monthNames[month]} ${year}`;
 
-    // Дни недели
     dayNames.forEach((d) => {
         const el = document.createElement("div");
         el.className = "calendar-weekday";
@@ -42,15 +58,12 @@ function renderCalendar() {
         grid.appendChild(el);
     });
 
-    // Узнаем, с какого дня недели начинается месяц (1 - Пн, 7 - Вс)
     const firstDay = new Date(year, month, 1);
     let startWeekday = firstDay.getDay();
     if (startWeekday === 0) startWeekday = 7;
-    
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const prevMonthDays = new Date(year, month, 0).getDate();
 
-    // Пустые ячейки для прошлого месяца
     for (let i = startWeekday - 1; i > 0; i--) {
         const el = document.createElement("div");
         el.className = "calendar-day muted";
@@ -75,11 +88,9 @@ function renderCalendar() {
         if (cellDateString === todayString) el.classList.add("today");
         if (cellDateString === selectedString) el.classList.add("selected");
 
-        // Ищем задачи на этот день
         const hasTasks = allTasks.some(task => {
             if (!task.deadline) return false;
-            const taskDateStr = task.deadline.substring(0, 10); // "2026-11-19"
-            return taskDateStr === cellDateString;
+            return task.deadline.substring(0, 10) === cellDateString;
         });
 
         if (hasTasks) {
@@ -100,6 +111,8 @@ function renderCalendar() {
 function renderDayTasks() {
     const list = document.getElementById("calendarTaskList");
     const title = document.getElementById("calendarDayTitle");
+    if (!list || !title) return;
+    
     list.innerHTML = "";
 
     const selectedString = getDateString(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
@@ -109,16 +122,16 @@ function renderDayTasks() {
     const isToday = selectedString === todayString;
     title.textContent = `${dateStr} — ${isToday ? "сегодня" : "выбранный день"}`;
 
-    // Фильтруем по строкам
     const dayTasks = allTasks.filter((t) => {
         if (!t.deadline) return false;
-        const taskDateStr = t.deadline.substring(0, 10);
-        return taskDateStr === selectedString;
+        return t.deadline.substring(0, 10) === selectedString;
     });
 
-    console.log(`Задачи на ${selectedString}:`, dayTasks); // Отладка
-
     if (dayTasks.length === 0) {
+        // Если задач нет и это не ошибка загрузки, показываем стандартное сообщение
+        if (allTasks.length === 0 && document.getElementById("calendarTaskList").innerHTML.includes("Не удалось подключиться")) {
+            return;
+        }
         list.innerHTML = `<div class="empty-state">На этот день задач нет</div>`;
         return;
     }
@@ -129,7 +142,6 @@ function renderDayTasks() {
         const li = document.createElement("li");
         li.className = `task-card prio-${task.priority} ${task.completed ? "completed-status" : ""}`;
         
-        // Берем время из строки "YYYY-MM-DDTHH:MM"
         let time = "00:00";
         if (task.deadline.length >= 16) {
             time = task.deadline.substring(11, 16);

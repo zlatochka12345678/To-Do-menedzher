@@ -40,26 +40,38 @@ async function fetchTasks() {
     }
 }
 
+// Исправленная логика создания задачи
 taskForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    
     const title = document.getElementById("taskTitle").value.trim();
     const subject = document.getElementById("taskSubject").value.trim();
     const deadline = document.getElementById("taskDeadline").value;
 
     if (!title || !subject || !deadline) return;
 
-    await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, subject, priority: selectedPriority, deadline }),
-    });
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, subject, priority: selectedPriority, deadline }),
+        });
 
-    modalOverlay.classList.remove("open");
-    taskForm.reset();
-    selectedPriority = "medium";
-    priorityGroup.querySelectorAll(".prio-btn").forEach((b) => b.classList.remove("active"));
-    priorityGroup.querySelector('[data-prio="medium"]').classList.add("active");
-    fetchTasks();
+        if (!response.ok) throw new Error("Ошибка при сохранении на сервере");
+
+        // Очищаем форму и закрываем модалку только после успешного сохранения
+        modalOverlay.classList.remove("open");
+        taskForm.reset();
+        selectedPriority = "medium";
+        priorityGroup.querySelectorAll(".prio-btn").forEach((b) => b.classList.remove("active"));
+        priorityGroup.querySelector('[data-prio="medium"]').classList.add("active");
+        
+        // Обновляем список
+        fetchTasks();
+    } catch (error) {
+        console.error("Ошибка создания задачи:", error);
+        alert("Не удалось сохранить задачу. Попробуйте ещё раз.");
+    }
 });
 
 window.toggleTask = async function (id, event) {

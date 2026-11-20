@@ -253,7 +253,6 @@ body {
     border-radius: 16px;
     border: 1px dashed var(--border-color);
 }
-
 /* ---------- Нижнее меню ---------- */
 .bottom-nav {
     position: fixed;
@@ -361,125 +360,129 @@ body {
     border-radius: 10px;
 }
 .detail-row span:first-child { color: var(--text-muted); }
-Используйте код с осторожностью.
 .icon-btn { background: none; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; }
 .icon-btn:hover { color: var(--priority-high); }
+
 /* ---------- Календарь ---------- */
 .calendar-widget {
-background: var(--card-bg);
-border-radius: 16px;
-padding: 16px;
-margin-bottom: 16px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
 }
 .calendar-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
 }
 .calendar-month { font-weight: 600; font-size: 0.95rem; }
 .calendar-nav { display: flex; gap: 6px; }
 .calendar-arrow {
-background: var(--panel-bg);
-border: 1px solid var(--border-color);
-color: var(--text-main);
-width: 30px;
-height: 30px;
-border-radius: 8px;
-cursor: pointer;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
 }
 .calendar-arrow:hover { border-color: var(--accent-blue); }
 .calendar-grid {
-display: grid;
-grid-template-columns: repeat(7, 1fr);
-gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
 }
 .calendar-weekday {
-font-size: 0.7rem;
-color: var(--text-muted);
-text-align: center;
-padding: 4px 0;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 4px 0;
 }
 .calendar-day {
-aspect-ratio: 1;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-font-size: 0.8rem;
-border-radius: 10px;
-cursor: pointer;
-color: var(--text-main);
-position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-main);
+    position: relative;
 }
 .calendar-day.muted { color: #3b4060; cursor: default; }
 .calendar-day.today { border: 1px solid var(--accent-blue); }
 .calendar-day.selected { background: var(--accent-blue); color: #fff; }
+
 .calendar-dot {
-width: 4px;
-height: 4px;
-background-color: var(--priority-medium);
-border-radius: 50%;
-position: absolute;
-bottom: 5px;
+    width: 4px;
+    height: 4px;
+    background-color: var(--priority-medium);
+    border-radius: 50%;
+    position: absolute;
+    bottom: 5px;
 }
 .calendar-day.selected .calendar-dot {
-background-color: #fff;
+    background-color: #fff;
 }
+
 .calendar-section-title {
-font-size: 0.9rem;
-font-weight: 600;
-margin-bottom: 10px;
-color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-main);
 }
 .calendar-task-list {
-grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr !important;
 }
+
 /* ---------- Группа ---------- */
 .group-stats {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 12px;
-margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
 }
 .group-stat-card {
-background: var(--card-bg);
-padding: 14px;
-border-radius: 14px;
-display: flex;
-flex-direction: column;
-gap: 4px;
-align-items: flex-start;
+    background: var(--card-bg);
+    padding: 14px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
 }
 .group-stat-num { font-size: 1.4rem; font-weight: 700; color: var(--accent-blue); }
 .group-stat-label { font-size: 0.75rem; color: var(--text-muted); }
 .group-section-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; }
+
 .member-list {
-list-style: none;
-display: grid;
-grid-template-columns: 1fr;
-gap: 10px;
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
 }
 .member-item {
-display: flex;
-align-items: center;
-gap: 12px;
-background: var(--card-bg);
-padding: 12px 14px;
-border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card-bg);
+    padding: 12px 14px;
+    border-radius: 14px;
 }
 .member-avatar {
-width: 40px;
-height: 40px;
-border-radius: 50%;
-background: var(--accent-blue-soft);
-color: #aeb6ff;
-display: flex;
-align-items: center;
-justify-content: center;
-font-weight: 700;
-font-size: 0.85rem;
-flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent-blue-soft);
+    color: #aeb6ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
 }
 .member-info { flex-grow: 1; }
 .member-name { font-size: 0.9rem; font-weight: 600; }
@@ -487,52 +490,61 @@ flex-shrink: 0;
 .member-status { width: 10px; height: 10px; border-radius: 50%; }
 .member-status.online { background: var(--priority-low); }
 .member-status.offline { background: #3b4060; }
+
 /* ---------- Адаптация под планшеты (от 640px) ---------- */
 @media (min-width: 640px) {
-.app-wrapper {
-padding: 24px 28px 104px;
+    .app-wrapper {
+        padding: 24px 28px 104px;
+    }
+
+    .task-list,
+    .member-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .modal-overlay {
+        align-items: center;
+        padding: 20px;
+    }
+
+    .modal-content {
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+    }
 }
-.task-list,
-.member-list {
-grid-template-columns: repeat(2, 1fr);
-gap: 14px;
-}
-.modal-overlay {
-align-items: center;
-padding: 20px;
-}
-.modal-content {
-border-radius: 20px;
-border: 1px solid var(--border-color);
-}
-}
+
 /* ---------- Адаптация под ПК / ноутбуки (от 1024px) ---------- */
 @media (min-width: 1024px) {
-.app-wrapper {
-padding: 32px 40px 110px;
-}
-.main-nav h1 {
-font-size: 1.75rem;
-}
-.task-list,
-.member-list {
-grid-template-columns: repeat(3, 1fr);
-gap: 16px;
-}
-.bottom-nav {
-left: 50%;
-transform: translateX(-50%);
-bottom: 20px;
-width: 440px;
-border: 1px solid var(--border-color);
-border-radius: 18px;
-padding: 10px 16px;
-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-.nav-item {
-flex-direction: row;
-justify-content: center;
-gap: 8px;
-font-size: 0.85rem;
-}
+    .app-wrapper {
+        padding: 32px 40px 110px;
+    }
+
+    .main-nav h1 {
+        font-size: 1.75rem;
+    }
+
+    .task-list,
+    .member-list {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .bottom-nav {
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 20px;
+        width: 440px;
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        padding: 10px 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .nav-item {
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+        font-size: 0.85rem;
+    }
 }

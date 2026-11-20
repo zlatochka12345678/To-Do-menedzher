@@ -3,33 +3,36 @@ let allTasks = [];
 let currentDate = new Date();
 let selectedDate = new Date();
 
-const monthNames = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
-const dayNames = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
 async function loadTasks() {
+    const grid = document.getElementById("calendarGrid");
+    if (!grid) return;
+
     try {
         const res = await fetch(API_URL);
         if (!res.ok) throw new Error("Сервер не отвечает");
-        
-        // Проверяем, что сервер вернул именно JSON, а не HTML
+
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
             throw new Error("Сервер вернул не JSON");
         }
 
         allTasks = await res.json();
-        console.log("Загруженные задачи:", allTasks);
     } catch (e) {
         console.error("Ошибка загрузки задач для календаря:", e);
-        allTasks = []; // Сбрасываем задачи, чтобы не было ошибок
-        
-        // Показываем ошибку в интерфейсе, если сервер не запущен
-        document.getElementById("calendarTaskList").innerHTML = `
-            <div class="empty-state" style="color: #eb5757;">
-                Не удалось подключиться к серверу.<br>
-                Запустите сервер командой <b>python main.py</b> и откройте <b>http://127.0.0.1:8000</b>
-            </div>
-        `;
+        allTasks = [];
+
+        const taskList = document.getElementById("calendarTaskList");
+        if (taskList) {
+            taskList.innerHTML = `
+                <div class="empty-state" style="color: #eb5757;">
+                    Не удалось подключиться к серверу.<br>
+                    Запустите сервер командой <b>python main.py</b> и откройте <b>http://127.0.0.1:8000</b>
+                </div>
+            `;
+        }
     }
     renderCalendar();
     renderDayTasks();
@@ -44,7 +47,7 @@ function getDateString(year, month, day) {
 function renderCalendar() {
     const grid = document.getElementById("calendarGrid");
     const monthLabel = document.getElementById("calendarMonth");
-    if (!grid) return;
+    if (!grid || !monthLabel) return;
     grid.innerHTML = "";
 
     const year = currentDate.getFullYear();
@@ -53,7 +56,7 @@ function renderCalendar() {
 
     dayNames.forEach((d) => {
         const el = document.createElement("div");
-        el.className = "calendar-weekday";
+        el.className = "cal-weekday calendar-weekday";
         el.textContent = d;
         grid.appendChild(el);
     });
@@ -66,7 +69,7 @@ function renderCalendar() {
 
     for (let i = startWeekday - 1; i > 0; i--) {
         const el = document.createElement("div");
-        el.className = "calendar-day muted";
+        el.className = "cal-day calendar-day other-month muted";
         el.textContent = prevMonthDays - i + 1;
         grid.appendChild(el);
     }
@@ -74,12 +77,13 @@ function renderCalendar() {
     const today = new Date();
     const todayString = getDateString(today.getFullYear(), today.getMonth(), today.getDate());
     const selectedString = getDateString(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-    
+
     for (let d = 1; d <= daysInMonth; d++) {
         const el = document.createElement("div");
-        el.className = "calendar-day";
-        
+        el.className = "cal-day calendar-day";
+
         const numSpan = document.createElement("span");
+        numSpan.className = "cal-day-num";
         numSpan.textContent = d;
         el.appendChild(numSpan);
 
@@ -88,15 +92,17 @@ function renderCalendar() {
         if (cellDateString === todayString) el.classList.add("today");
         if (cellDateString === selectedString) el.classList.add("selected");
 
-        const hasTasks = allTasks.some(task => {
-            if (!task.deadline) return false;
-            return task.deadline.substring(0, 10) === cellDateString;
-        });
+        const dayTasks = allTasks.filter(task => task.deadline && task.deadline.substring(0, 10) === cellDateString);
 
-        if (hasTasks) {
-            const dot = document.createElement("div");
-            dot.className = "calendar-dot";
-            el.appendChild(dot);
+        if (dayTasks.length > 0) {
+            const dotsWrap = document.createElement("div");
+            dotsWrap.className = "cal-dots";
+            dayTasks.slice(0, 3).forEach(t => {
+                const dot = document.createElement("span");
+                dot.className = "cal-dot calendar-dot " + (t.completed ? "completed" : "active");
+                dotsWrap.appendChild(dot);
+            });
+            el.appendChild(dotsWrap);
         }
 
         el.addEventListener("click", () => {
@@ -111,27 +117,25 @@ function renderCalendar() {
 function renderDayTasks() {
     const list = document.getElementById("calendarTaskList");
     const title = document.getElementById("calendarDayTitle");
+    const countLabel = document.getElementById("calendarDayCount");
     if (!list || !title) return;
-    
+
     list.innerHTML = "";
 
     const selectedString = getDateString(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
     const todayString = getDateString(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
-    
+
     const dateStr = selectedDate.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
     const isToday = selectedString === todayString;
-    title.textContent = `${dateStr} — ${isToday ? "сегодня" : "выбранный день"}`;
+    title.textContent = `${dateStr} • ${isToday ? "сегодня" : "выбранный день"}`;
 
-    const dayTasks = allTasks.filter((t) => {
-        if (!t.deadline) return false;
-        return t.deadline.substring(0, 10) === selectedString;
-    });
+    const dayTasks = allTasks.filter((t) => t.deadline && t.deadline.substring(0, 10) === selectedString);
+
+    if (countLabel) {
+        countLabel.textContent = dayTasks.length > 0 ? `Задач: ${dayTasks.length}` : "";
+    }
 
     if (dayTasks.length === 0) {
-        // Если задач нет и это не ошибка загрузки, показываем стандартное сообщение
-        if (allTasks.length === 0 && document.getElementById("calendarTaskList").innerHTML.includes("Не удалось подключиться")) {
-            return;
-        }
         list.innerHTML = `<div class="empty-state">На этот день задач нет</div>`;
         return;
     }
@@ -141,12 +145,12 @@ function renderDayTasks() {
     dayTasks.forEach((task) => {
         const li = document.createElement("li");
         li.className = `task-card prio-${task.priority} ${task.completed ? "completed-status" : ""}`;
-        
+
         let time = "00:00";
         if (task.deadline.length >= 16) {
             time = task.deadline.substring(11, 16);
         }
-        
+
         let timeClass = "";
         if (!task.completed && task.deadline) {
             const taskDate = new Date(task.deadline);
@@ -170,18 +174,34 @@ function renderDayTasks() {
 }
 
 function escapeHTML(str) {
-    return str.replace(/[&<>'"]/g, (tag) =>
-        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[tag] || tag)
+    return String(str).replace(/[&<>'"]/g, (tag) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "'", '"': "&quot;" }[tag] || tag)
     );
 }
 
-document.getElementById("prevMonth").addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    renderCalendar();
-});
-document.getElementById("nextMonth").addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar();
-});
+const prevMonthBtn = document.getElementById("prevMonth");
+const nextMonthBtn = document.getElementById("nextMonth");
+const todayBtn = document.getElementById("todayBtn");
+
+if (prevMonthBtn) {
+    prevMonthBtn.addEventListener("click", () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+    });
+}
+if (nextMonthBtn) {
+    nextMonthBtn.addEventListener("click", () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+    });
+}
+if (todayBtn) {
+    todayBtn.addEventListener("click", () => {
+        currentDate = new Date();
+        selectedDate = new Date();
+        renderCalendar();
+        renderDayTasks();
+    });
+}
 
 loadTasks();

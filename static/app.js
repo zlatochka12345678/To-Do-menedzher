@@ -1,4 +1,4 @@
-const API_URL = "/api/tasks";
+const STORAGE_KEY = "itteam_tasks_v1";
 
 let tasks = [];
 let currentFilter = "all";
@@ -37,9 +37,9 @@ detailOverlay.addEventListener("click", (e) => {
 });
 
 // Удаление задачи из окна деталей
-document.getElementById("deleteDetailBtn").addEventListener("click", async () => {
+document.getElementById("deleteDetailBtn").addEventListener("click", () => {
     if (!activeDetailTaskId) return;
-    await deleteTask(activeDetailTaskId);
+    deleteTask(activeDetailTaskId);
     detailOverlay.classList.remove("open");
 });
 
@@ -66,30 +66,44 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
 const notifBtn = document.getElementById("notifBtn");
 if (notifBtn) {
     notifBtn.addEventListener("click", () => {
-        const urgent = tasks.filter((t) => !t.completed && new Date(t.deadline) - new Date() <= 86400000);
-        alert(urgent.length > 0 ? `Срочных задач (до 24ч или просрочено): ${urgent.length}` : "Горящих задач нет!");
+        const urgent = tasks.filter(
+            (t) => !t.completed && t.deadline && new Date(t.deadline) - new Date() <= 86400000
+        );
+        alert(
+            urgent.length > 0
+                ? `Срочных задач (до 24ч или просрочено): ${urgent.length}`
+                : "Горящих задач нет!"
+        );
     });
 }
 
-// Загрузка задач с сервера
-async function fetchTasks() {
+// Загрузка и сохранение задач в localStorage (работает на GitHub Pages без сервера)
+function loadTasksFromStorage() {
     try {
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error("Ошибка загрузки");
-        tasks = await res.json();
-        updateCounters();
-        renderTasks();
-    } catch (err) {
-        console.error(err);
-        taskList.innerHTML = `<div class="empty-state">Запустите сервер командой <b>python main.py</b> и откройте <b>http://127.0.0.1:8000</b></div>`;
+        const raw = localStorage.getItem(STORAGE_KEY);
+        tasks = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        tasks = [];
     }
+    sortTasks();
+    updateCounters();
+    renderTasks();
+}
+
+function saveTasksToStorage() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+}
+
+function sortTasks() {
+    tasks.sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        return new Date(a.deadline) - new Date(b.deadline);
+    });
 }
 
 function updateCounters() {
-    const active = tasks.filter((t) => !t.completed).length;
-    const done = tasks.filter((t) => t.completed).length;
-    currentCount.textContent = active;
-    completedCount.textContent = done;
+    currentCount.textContent = tasks.filter((t) => !t.completed).length;
+    completedCount.textContent = tasks.filter((t) => t.completed).length;
 }
 
 function escapeHTML(str) {
@@ -142,8 +156,8 @@ function renderTasks() {
         }
 
         li.className = `task-card prio-${task.priority} ${urgencyClass} ${task.completed ? "completed-status" : ""}`;
-
-        const prioText = task.priority === "high" ? "Высокий" : task.priority === "medium" ? "Средний" : "Низкий";
+        const prioText =
+            task.priority === "high" ? "Высокий" : task.priority === "medium" ? "Средний" : "Низкий";
 
         li.innerHTML = `
             <input type="checkbox" class="task-checkbox" ${task.completed ? "checked" : ""}>
@@ -158,19 +172,16 @@ function renderTasks() {
             <button type="button" class="del-btn" title="Удалить">✕</button>
         `;
 
-        // Переключение статуса выполнения
         li.querySelector(".task-checkbox").addEventListener("click", (e) => {
             e.stopPropagation();
             toggleTask(task.id);
         });
 
-        // Быстрое удаление
         li.querySelector(".del-btn").addEventListener("click", (e) => {
             e.stopPropagation();
             deleteTask(task.id);
         });
 
-        // Открытие деталей задачи при клике на карточку
         li.addEventListener("click", () => openTaskDetails(task));
 
         taskList.appendChild(li);
@@ -179,7 +190,8 @@ function renderTasks() {
 
 function openTaskDetails(task) {
     activeDetailTaskId = task.id;
-    const prioText = task.priority === "high" ? "Высокий" : task.priority === "medium" ? "Средний" : "Низкий";
+    const prioText =
+        task.priority === "high" ? "Высокий" : task.priority === "medium" ? "Средний" : "Низкий";
     detailBody.innerHTML = `
         <div class="detail-row"><span>Задача</span><strong>${escapeHTML(task.title)}</strong></div>
         <div class="detail-row"><span>Описание</span><span>${escapeHTML(task.subject)}</span></div>
@@ -190,26 +202,26 @@ function openTaskDetails(task) {
     detailOverlay.classList.add("open");
 }
 
-async function toggleTask(id) {
-    try {
-        const res = await fetch(`${API_URL}/${id}/toggle`, { method: "PATCH" });
-        if (res.ok) fetchTasks();
-    } catch (e) {
-        console.error(e);
+function toggleTask(id) {
+    const task = tasks.find((t) => t.id === id);
+    if (task) {
+        task.completed = !task.completed;
+        sortTasks();
+        saveTasksToStorage();
+        updateCounters();
+        renderTasks();
     }
 }
 
-async function deleteTask(id) {
-    try {
-        const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-        if (res.ok) fetchTasks();
-    } catch (e) {
-        console.error(e);
-    }
+function deleteTask(id) {
+    tasks = tasks.filter((t) => t.id !== id);
+    saveTasksToStorage();
+    updateCounters();
+    renderTasks();
 }
 
 // Создание новой задачи
-taskForm.addEventListener("submit", async (e) => {
+taskForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
     const title = document.getElementById("taskTitle").value.trim();
@@ -221,30 +233,26 @@ taskForm.addEventListener("submit", async (e) => {
         return;
     }
 
-    const payload = { title, subject, priority: selectedPriority, deadline };
+    const newTask = {
+        id: Date.now(),
+        title,
+        subject,
+        priority: selectedPriority,
+        deadline,
+        completed: false,
+    };
 
-    try {
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        });
+    tasks.push(newTask);
+    sortTasks();
+    saveTasksToStorage();
+    updateCounters();
+    renderTasks();
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || "Ошибка сервера");
-        }
-
-        modalOverlay.classList.remove("open");
-        taskForm.reset();
-        selectedPriority = "medium";
-        priorityGroup.querySelectorAll(".prio-btn").forEach((b) => b.classList.remove("active"));
-        priorityGroup.querySelector('[data-prio="medium"]').classList.add("active");
-
-        fetchTasks();
-    } catch (error) {
-        alert("Не удалось сохранить задачу. Причина: " + error.message);
-    }
+    modalOverlay.classList.remove("open");
+    taskForm.reset();
+    selectedPriority = "medium";
+    priorityGroup.querySelectorAll(".prio-btn").forEach((b) => b.classList.remove("active"));
+    priorityGroup.querySelector('[data-prio="medium"]').classList.add("active");
 });
 
-fetchTasks();
+loadTasksFromStorage();

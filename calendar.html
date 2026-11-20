@@ -2,31 +2,31 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IT.TEAM — Календарь</title>
-    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="/static/style.css">
     <style>
         #calendarGrid {
             display: grid !important;
             grid-template-columns: repeat(7, 1fr) !important;
-            gap: 4px !important;
+            gap: 6px !important;
             align-items: center;
         }
         .cal-weekday {
             text-align: center;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
             opacity: 0.5;
-            padding: 6px 0;
+            padding: 8px 0;
         }
         .cal-day {
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
-            min-height: 44px !important;
+            min-height: 48px !important;
             height: auto !important;
-            padding: 6px 2px !important;
+            padding: 8px 4px !important;
             border-radius: 12px;
             cursor: pointer;
             overflow: visible !important;
@@ -55,7 +55,7 @@
             align-items: center;
             gap: 3px;
             height: 7px;
-            margin-top: 3px;
+            margin-top: 4px;
         }
         .cal-dot {
             width: 5px !important;
@@ -76,8 +76,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 18px 0 12px;
-            gap: 8px;
+            margin: 20px 0 12px;
         }
         .calendar-section-header .calendar-section-title {
             margin: 0 !important;
@@ -85,53 +84,69 @@
         .calendar-day-count {
             font-size: 13px;
             opacity: 0.6;
-            white-space: nowrap;
+        }
+        @media (min-width: 768px) {
+            .calendar-layout {
+                display: grid;
+                grid-template-columns: 1.2fr 1fr;
+                gap: 24px;
+                align-items: start;
+            }
+            .calendar-section-header {
+                margin-top: 0;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="phone-container">
+    <div class="app-wrapper">
         <header class="app-header">
-            <div class="brand">
-                <span class="brand-strong">IT.</span><span class="brand-light">TEAM</span>
-                <button class="notif-btn" aria-label="Уведомления">🔔</button>
-            </div>
-            <div class="main-nav">
-                <h1>Календарь</h1>
-                <button class="small-btn" id="todayBtn">Сегодня</button>
+            <div class="header-inner">
+                <div class="brand">
+                    <span class="brand-strong">IT.</span><span class="brand-light">TEAM</span>
+                    <button class="notif-btn" aria-label="Уведомления">🔔</button>
+                </div>
+                <div class="main-nav">
+                    <h1>Календарь</h1>
+                    <button class="small-btn" id="todayBtn">Сегодня</button>
+                </div>
             </div>
         </header>
 
-        <div class="calendar-widget" id="calendarWidget">
-            <div class="calendar-header">
-                <span class="calendar-month" id="calendarMonth">Ноябрь 2026</span>
-                <div class="calendar-nav">
-                    <button class="calendar-arrow" id="prevMonth">‹</button>
-                    <button class="calendar-arrow" id="nextMonth">›</button>
+        <main class="main-content calendar-layout">
+            <div class="calendar-widget" id="calendarWidget">
+                <div class="calendar-header">
+                    <span class="calendar-month" id="calendarMonth">Ноябрь 2026</span>
+                    <div class="calendar-nav">
+                        <button class="calendar-arrow" id="prevMonth">‹</button>
+                        <button class="calendar-arrow" id="nextMonth">›</button>
+                    </div>
                 </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
             </div>
-            <div class="calendar-grid" id="calendarGrid"></div>
-        </div>
 
-        <div class="calendar-section-header">
-            <div class="calendar-section-title" id="calendarDayTitle">18 ноября • сегодня</div>
-            <span class="calendar-day-count" id="calendarDayCount"></span>
-        </div>
-        <ul class="task-list calendar-task-list" id="calendarTaskList"></ul>
+            <div class="calendar-tasks-pane">
+                <div class="calendar-section-header">
+                    <div class="calendar-section-title" id="calendarDayTitle">18 ноября • сегодня</div>
+                    <span class="calendar-day-count" id="calendarDayCount"></span>
+                </div>
+                <ul class="task-list calendar-task-list" id="calendarTaskList"></ul>
+            </div>
+        </main>
 
         <nav class="bottom-nav">
-            <button class="nav-item" onclick="location.href='index.html'">
+            <button class="nav-item" onclick="location.href='/'">
                 <span class="nav-icon">📋</span> Задачи
             </button>
-            <button class="nav-item active" onclick="location.href='calendar.html'">
+            <button class="nav-item active" onclick="location.href='/calendar'">
                 <span class="nav-icon">📅</span> Календарь
             </button>
-            <button class="nav-item" onclick="location.href='group.html'">
+            <button class="nav-item" onclick="location.href='/group'">
                 <span class="nav-icon">👥</span> Группа
             </button>
         </nav>
     </div>
 
-    <script src="static/calendar.js?v=3"></script>
+    <script src="/static/calendar.js?v=3"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const API_URL = "/api/tasks";
+const STORAGE_KEY = "itteam_tasks_v1";
 let allTasks = [];
 let currentDate = new Date();
 let selectedDate = new Date();
@@ -6,41 +6,23 @@ let selectedDate = new Date();
 const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
-async function loadTasks() {
+function loadTasks() {
     const grid = document.getElementById("calendarGrid");
     if (!grid) return;
 
     try {
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error("Сервер не отвечает");
-
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-            throw new Error("Сервер вернул не JSON");
-        }
-
-        allTasks = await res.json();
+        const raw = localStorage.getItem(STORAGE_KEY);
+        allTasks = raw ? JSON.parse(raw) : [];
     } catch (e) {
-        console.error("Ошибка загрузки задач для календаря:", e);
         allTasks = [];
-
-        const taskList = document.getElementById("calendarTaskList");
-        if (taskList) {
-            taskList.innerHTML = `
-                <div class="empty-state" style="color: #eb5757;">
-                    Не удалось подключиться к серверу.<br>
-                    Запустите сервер командой <b>python main.py</b> и откройте <b>http://127.0.0.1:8000</b>
-                </div>
-            `;
-        }
     }
     renderCalendar();
     renderDayTasks();
 }
 
 function getDateString(year, month, day) {
-    const m = String(month + 1).padStart(2, '0');
-    const d = String(day).padStart(2, '0');
+    const m = String(month + 1).padStart(2, "0");
+    const d = String(day).padStart(2, "0");
     return `${year}-${m}-${d}`;
 }
 
@@ -92,12 +74,12 @@ function renderCalendar() {
         if (cellDateString === todayString) el.classList.add("today");
         if (cellDateString === selectedString) el.classList.add("selected");
 
-        const dayTasks = allTasks.filter(task => task.deadline && task.deadline.substring(0, 10) === cellDateString);
+        const dayTasks = allTasks.filter((task) => task.deadline && task.deadline.substring(0, 10) === cellDateString);
 
         if (dayTasks.length > 0) {
             const dotsWrap = document.createElement("div");
             dotsWrap.className = "cal-dots";
-            dayTasks.slice(0, 3).forEach(t => {
+            dayTasks.slice(0, 3).forEach((t) => {
                 const dot = document.createElement("span");
                 dot.className = "cal-dot calendar-dot " + (t.completed ? "completed" : "active");
                 dotsWrap.appendChild(dot);
@@ -164,7 +146,7 @@ function renderDayTasks() {
                 <div class="task-title">${escapeHTML(task.title)}</div>
                 <div class="task-subject">${escapeHTML(task.subject)}</div>
                 <div class="task-footer">
-                    <span class="prio-tag prio-${task.priority}">${task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий'}</span>
+                    <span class="prio-tag prio-${task.priority}">${task.priority === "high" ? "Высокий" : task.priority === "medium" ? "Средний" : "Низкий"}</span>
                     <span class="task-time-badge ${timeClass}">${time}</span>
                 </div>
             </div>

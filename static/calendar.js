@@ -3,13 +3,13 @@ let allTasks = [];
 let currentDate = new Date();
 let selectedDate = new Date();
 
-const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+const monthNames = [
+    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+];
 const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
 function loadTasks() {
-    const grid = document.getElementById("calendarGrid");
-    if (!grid) return;
-
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         allTasks = raw ? JSON.parse(raw) : [];
@@ -30,15 +30,15 @@ function renderCalendar() {
     const grid = document.getElementById("calendarGrid");
     const monthLabel = document.getElementById("calendarMonth");
     if (!grid || !monthLabel) return;
-    grid.innerHTML = "";
 
+    grid.innerHTML = "";
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     monthLabel.textContent = `${monthNames[month]} ${year}`;
 
     dayNames.forEach((d) => {
         const el = document.createElement("div");
-        el.className = "cal-weekday calendar-weekday";
+        el.className = "cal-weekday";
         el.textContent = d;
         grid.appendChild(el);
     });
@@ -46,12 +46,13 @@ function renderCalendar() {
     const firstDay = new Date(year, month, 1);
     let startWeekday = firstDay.getDay();
     if (startWeekday === 0) startWeekday = 7;
+
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const prevMonthDays = new Date(year, month, 0).getDate();
 
     for (let i = startWeekday - 1; i > 0; i--) {
         const el = document.createElement("div");
-        el.className = "cal-day calendar-day other-month muted";
+        el.className = "cal-day other-month";
         el.textContent = prevMonthDays - i + 1;
         grid.appendChild(el);
     }
@@ -62,29 +63,29 @@ function renderCalendar() {
 
     for (let d = 1; d <= daysInMonth; d++) {
         const el = document.createElement("div");
-        el.className = "cal-day calendar-day";
+        el.className = "cal-day";
 
-        const numSpan = document.createElement("span");
-        numSpan.className = "cal-day-num";
-        numSpan.textContent = d;
-        el.appendChild(numSpan);
+        const num = document.createElement("span");
+        num.textContent = d;
+        el.appendChild(num);
 
         const cellDateString = getDateString(year, month, d);
-
         if (cellDateString === todayString) el.classList.add("today");
         if (cellDateString === selectedString) el.classList.add("selected");
 
-        const dayTasks = allTasks.filter((task) => task.deadline && task.deadline.substring(0, 10) === cellDateString);
+        const dayTasks = allTasks.filter(
+            (t) => t.deadline && t.deadline.substring(0, 10) === cellDateString
+        );
 
         if (dayTasks.length > 0) {
-            const dotsWrap = document.createElement("div");
-            dotsWrap.className = "cal-dots";
+            const dots = document.createElement("div");
+            dots.className = "cal-dots";
             dayTasks.slice(0, 3).forEach((t) => {
                 const dot = document.createElement("span");
-                dot.className = "cal-dot calendar-dot " + (t.completed ? "completed" : "active");
-                dotsWrap.appendChild(dot);
+                dot.className = "cal-dot" + (t.completed ? " completed" : "");
+                dots.appendChild(dot);
             });
-            el.appendChild(dotsWrap);
+            el.appendChild(dots);
         }
 
         el.addEventListener("click", () => {
@@ -92,6 +93,7 @@ function renderCalendar() {
             renderCalendar();
             renderDayTasks();
         });
+
         grid.appendChild(el);
     }
 }
@@ -99,22 +101,22 @@ function renderCalendar() {
 function renderDayTasks() {
     const list = document.getElementById("calendarTaskList");
     const title = document.getElementById("calendarDayTitle");
-    const countLabel = document.getElementById("calendarDayCount");
+    const count = document.getElementById("calendarDayCount");
     if (!list || !title) return;
 
     list.innerHTML = "";
-
     const selectedString = getDateString(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
     const todayString = getDateString(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
 
     const dateStr = selectedDate.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
-    const isToday = selectedString === todayString;
-    title.textContent = `${dateStr} • ${isToday ? "сегодня" : "выбранный день"}`;
+    title.textContent = `${dateStr} • ${selectedString === todayString ? "сегодня" : "выбранный день"}`;
 
-    const dayTasks = allTasks.filter((t) => t.deadline && t.deadline.substring(0, 10) === selectedString);
+    const dayTasks = allTasks.filter(
+        (t) => t.deadline && t.deadline.substring(0, 10) === selectedString
+    );
 
-    if (countLabel) {
-        countLabel.textContent = dayTasks.length > 0 ? `Задач: ${dayTasks.length}` : "";
+    if (count) {
+        count.textContent = dayTasks.length > 0 ? `Задач: ${dayTasks.length}` : "";
     }
 
     if (dayTasks.length === 0) {
@@ -123,30 +125,27 @@ function renderDayTasks() {
     }
 
     const now = new Date();
-
     dayTasks.forEach((task) => {
         const li = document.createElement("li");
         li.className = `task-card prio-${task.priority} ${task.completed ? "completed-status" : ""}`;
 
-        let time = "00:00";
-        if (task.deadline.length >= 16) {
-            time = task.deadline.substring(11, 16);
-        }
-
+        const time = task.deadline.length >= 16 ? task.deadline.substring(11, 16) : "00:00";
         let timeClass = "";
         if (!task.completed && task.deadline) {
-            const taskDate = new Date(task.deadline);
-            const hoursLeft = (taskDate - now) / (1000 * 60 * 60);
-            if (hoursLeft < 0) timeClass = "overdue";
-            else if (hoursLeft <= 24) timeClass = "soon";
+            const hrs = (new Date(task.deadline) - now) / 3600000;
+            if (hrs < 0) timeClass = "overdue";
+            else if (hrs <= 24) timeClass = "soon";
         }
+
+        const prioText =
+            task.priority === "high" ? "Высокий" : task.priority === "medium" ? "Средний" : "Низкий";
 
         li.innerHTML = `
             <div class="task-main-content">
                 <div class="task-title">${escapeHTML(task.title)}</div>
                 <div class="task-subject">${escapeHTML(task.subject)}</div>
                 <div class="task-footer">
-                    <span class="prio-tag prio-${task.priority}">${task.priority === "high" ? "Высокий" : task.priority === "medium" ? "Средний" : "Низкий"}</span>
+                    <span class="prio-tag prio-${task.priority}">${prioText}</span>
                     <span class="task-time-badge ${timeClass}">${time}</span>
                 </div>
             </div>
@@ -157,33 +156,25 @@ function renderDayTasks() {
 
 function escapeHTML(str) {
     return String(str).replace(/[&<>'"]/g, (tag) =>
-        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "'", '"': "&quot;" }[tag] || tag)
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[tag] || tag)
     );
 }
 
-const prevMonthBtn = document.getElementById("prevMonth");
-const nextMonthBtn = document.getElementById("nextMonth");
-const todayBtn = document.getElementById("todayBtn");
+document.getElementById("prevMonth").addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar();
+});
 
-if (prevMonthBtn) {
-    prevMonthBtn.addEventListener("click", () => {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
-    });
-}
-if (nextMonthBtn) {
-    nextMonthBtn.addEventListener("click", () => {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
-    });
-}
-if (todayBtn) {
-    todayBtn.addEventListener("click", () => {
-        currentDate = new Date();
-        selectedDate = new Date();
-        renderCalendar();
-        renderDayTasks();
-    });
-}
+document.getElementById("nextMonth").addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar();
+});
+
+document.getElementById("todayBtn").addEventListener("click", () => {
+    currentDate = new Date();
+    selectedDate = new Date();
+    renderCalendar();
+    renderDayTasks();
+});
 
 loadTasks();

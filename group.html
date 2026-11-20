@@ -12,11 +12,11 @@
             <div class="header-inner">
                 <div class="brand">
                     <span class="brand-strong">IT.</span><span class="brand-light">TEAM</span>
-                    <button class="notif-btn" aria-label="Уведомления">🔔</button>
+                    <button type="button" class="notif-btn" id="notifBtn" aria-label="Уведомления">🔔</button>
                 </div>
                 <div class="main-nav">
                     <h1>Моя группа</h1>
-                    <button class="small-btn">ИС-23</button>
+                    <button type="button" class="small-btn" id="groupBadge">ИС-23</button>
                 </div>
             </div>
         </header>
@@ -24,16 +24,16 @@
         <main class="main-content">
             <div class="group-stats">
                 <div class="group-stat-card">
-                    <span class="group-stat-num">24</span>
-                    <span class="group-stat-label">Студента</span>
+                    <span class="group-stat-num" id="studentsCount">8</span>
+                    <span class="group-stat-label">Студентов</span>
                 </div>
                 <div class="group-stat-card">
-                    <span class="group-stat-num">7</span>
+                    <span class="group-stat-num" id="groupActiveCount">0</span>
                     <span class="group-stat-label">Активных задач</span>
                 </div>
                 <div class="group-stat-card">
-                    <span class="group-stat-num">16</span>
-                    <span class="group-stat-label">Сдано сегодня</span>
+                    <span class="group-stat-num" id="groupDoneCount">0</span>
+                    <span class="group-stat-label">Выполнено</span>
                 </div>
             </div>
 
@@ -41,24 +41,19 @@
             <ul class="member-list" id="memberList"></ul>
         </main>
 
-                <nav class="bottom-nav">
-            <button class="nav-item" onclick="goPage('/', 'index.html')">
+        <nav class="bottom-nav">
+            <button type="button" class="nav-item" onclick="location.href='index.html'">
                 <span class="nav-icon">📋</span> Задачи
             </button>
-            <button class="nav-item" onclick="goPage('/calendar', 'calendar.html')">
+            <button type="button" class="nav-item" onclick="location.href='calendar.html'">
                 <span class="nav-icon">📅</span> Календарь
             </button>
-            <button class="nav-item active" onclick="goPage('/group', 'group.html')">
+            <button type="button" class="nav-item active" onclick="location.href='group.html'">
                 <span class="nav-icon">👥</span> Группа
             </button>
         </nav>
     </div>
 
-    <script>
-        function goPage(serverPath, filePath) {
-            window.location.href = window.location.protocol === "file:" ? filePath : serverPath;
-        }
-    </script>
     <script src="static/group.js"></script>
 </body>
 </html>

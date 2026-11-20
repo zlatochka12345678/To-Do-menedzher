@@ -4,106 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IT.TEAM — Задачи группы</title>
-    <style>
-        :root {
-            --bg-dark: #0f111a;
-            --panel-bg: #141724;
-            --card-bg: #1b1e2e;
-            --card-bg-alt: #20233a;
-            --accent-blue: #5b6cff;
-            --accent-blue-soft: #2a2f55;
-            --accent-orange: #ff7a45;
-            --accent-orange-soft: #3d2a26;
-            --text-main: #ffffff;
-            --text-muted: #8c91a5;
-            --border-color: #2b304a;
-            --priority-high: #eb5757;
-            --priority-medium: #f2c94c;
-            --priority-low: #27ae60;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; }
-        .app-wrapper { width: 100%; max-width: 1140px; margin: 0 auto; padding: 16px 16px 96px; display: flex; flex-direction: column; min-height: 100vh; }
-        .brand { display: flex; align-items: center; gap: 2px; font-size: 0.9rem; margin-bottom: 10px; position: relative; }
-        .brand-strong { font-weight: 800; }
-        .brand-light { color: var(--text-muted); }
-        .notif-btn { position: absolute; right: 0; background: none; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; }
-        .main-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .main-nav h1 { font-size: 1.5rem; font-weight: 700; }
-        .add-task-toggle { background: var(--accent-blue); color: #fff; border: none; width: 38px; height: 38px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(91, 108, 255, 0.4); }
-        .stats-badges { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 18px; }
-        .stat-box { padding: 14px 16px; border-radius: 14px; display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
-        .stat-box.current-box { background: var(--accent-blue-soft); color: #aeb6ff; }
-        .stat-box.completed-box { background: var(--accent-orange-soft); color: #ffb199; }
-        .stat-num { background: rgba(255,255,255,0.12); padding: 2px 12px; border-radius: 8px; font-size: 1.25rem; width: fit-content; }
-        .stat-label { font-size: 0.8rem; opacity: 0.85; }
-        .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-        .tab-btn { background: #1e2136; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.85rem; padding: 8px 14px; border-radius: 10px; cursor: pointer; }
-        .tab-btn.active { background: var(--accent-blue-soft); color: #fff; border-color: var(--accent-blue); }
-        .task-list { list-style: none; display: grid; grid-template-columns: 1fr; gap: 12px; }
-        .task-card { background: var(--card-bg); border-radius: 14px; padding: 14px 16px 14px 20px; display: flex; align-items: flex-start; gap: 12px; border: 1px solid transparent; position: relative; cursor: pointer; }
-        .task-card:hover { background: var(--card-bg-alt); }
-        .task-card::before { content: ''; position: absolute; left: 6px; top: 14px; bottom: 14px; width: 3px; border-radius: 3px; background: var(--border-color); }
-        .task-card.prio-high::before { background: var(--priority-high); }
-        .task-card.prio-medium::before { background: var(--priority-medium); }
-        .task-card.prio-low::before { background: var(--priority-low); }
-        .task-card.deadline-warning { background: #2b2716; border-color: var(--priority-medium); }
-        .task-card.deadline-danger { background: #2b1618; border-color: var(--priority-high); }
-        .task-checkbox { appearance: none; width: 20px; height: 20px; border: 2px solid var(--text-muted); border-radius: 6px; cursor: pointer; margin-top: 2px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .task-checkbox:checked { background: var(--accent-blue); border-color: var(--accent-blue); }
-        .task-checkbox:checked::after { content: '✓'; color: #fff; font-size: 0.75rem; font-weight: bold; }
-        .task-main-content { flex-grow: 1; min-width: 0; }
-        .task-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
-        .task-subject { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
-        .task-footer { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-        .task-time-badge { font-size: 0.75rem; color: var(--text-muted); }
-        .prio-tag { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; }
-        .prio-tag.prio-high { background: rgba(235,87,87,0.2); color: var(--priority-high); }
-        .prio-tag.prio-medium { background: rgba(242,201,76,0.2); color: var(--priority-medium); }
-        .prio-tag.prio-low { background: rgba(39,174,96,0.2); color: var(--priority-low); }
-        .task-card.completed-status { opacity: 0.45; }
-        .task-card.completed-status .task-title { text-decoration: line-through; }
-        .del-btn { background: none; border: none; color: #555; cursor: pointer; font-size: 1rem; }
-        .del-btn:hover { color: var(--priority-high); }
-        .empty-state { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px 16px; background: var(--panel-bg); border-radius: 16px; border: 1px dashed var(--border-color); }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--panel-bg); border-top: 1px solid var(--border-color); display: flex; padding: 10px 12px 14px; z-index: 50; }
-        .nav-item { flex: 1; background: none; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .nav-item.active { color: var(--accent-blue); font-weight: 600; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: flex-end; justify-content: center; z-index: 100; }
-        .modal-overlay.open { display: flex; }
-        .modal-content { background: var(--panel-bg); width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; padding: 20px 20px 28px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; }
-        .modal-header { display: flex; align-items: center; gap: 10px; }
-        .modal-header h3 { font-size: 1.15rem; flex-grow: 1; }
-        .modal-back, .icon-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; }
-        .field-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: -6px; }
-        .modal-content input, .modal-content textarea { width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); padding: 12px; border-radius: 10px; color: #fff; font-size: 0.9rem; }
-        .priority-group { display: flex; gap: 8px; }
-        .prio-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-muted); cursor: pointer; }
-        .prio-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
-        .btn-primary { width: 100%; padding: 14px; border-radius: 12px; border: none; background: var(--accent-blue); color: #fff; font-weight: 700; cursor: pointer; }
-        .detail-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 10px 12px; background: var(--card-bg); border-radius: 10px; }
-        @media (min-width: 640px) {
-            .task-list { grid-template-columns: repeat(2, 1fr); }
-            .modal-overlay { align-items: center; padding: 20px; }
-            .modal-content { border-radius: 20px; border: 1px solid var(--border-color); }
-        }
-        @media (min-width: 1024px) {
-            .task-list { grid-template-columns: repeat(3, 1fr); }
-            .bottom-nav { left: 50%; transform: translateX(-50%); bottom: 20px; width: 440px; border: 1px solid var(--border-color); border-radius: 18px; }
-            .nav-item { flex-direction: row; justify-content: center; gap: 8px; font-size: 0.85rem; }
-        }
-    </style>
+    <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
     <div class="app-wrapper">
         <header class="app-header">
-            <div class="brand">
-                <span class="brand-strong">IT.</span><span class="brand-light">TEAM</span>
-                <button class="notif-btn" id="notifBtn">🔔</button>
-            </div>
-            <div class="main-nav">
-                <h1>Задачи группы</h1>
-                <button class="add-task-toggle" id="openModalBtn">+</button>
+            <div class="header-inner">
+                <div class="brand">
+                    <span class="brand-strong">IT.</span><span class="brand-light">TEAM</span>
+                    <button class="notif-btn" id="notifBtn" aria-label="Уведомления">🔔</button>
+                </div>
+                <div class="main-nav">
+                    <h1>Задачи группы</h1>
+                    <button class="add-task-toggle" id="openModalBtn" aria-label="Добавить задачу">+</button>
+                </div>
             </div>
         </header>
 
@@ -120,173 +34,68 @@
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" data-filter="all">Все задачи</button>
-                <button class="tab-btn" data-filter="current">Текущие</button>
-                <button class="tab-btn" data-filter="completed">Выполненные</button>
+                <button type="button" class="tab-btn active" data-filter="all">Все задачи</button>
+                <button type="button" class="tab-btn" data-filter="current">Текущие</button>
+                <button type="button" class="tab-btn" data-filter="completed">Выполненные</button>
             </div>
 
             <ul class="task-list" id="taskList"></ul>
         </main>
 
         <nav class="bottom-nav">
-            <button class="nav-item active" onclick="location.href=location.protocol==='file:'?'index.html':'/'">📋 Задачи</button>
-            <button class="nav-item" onclick="location.href=location.protocol==='file:'?'calendar.html':'/calendar'">📅 Календарь</button>
-            <button class="nav-item" onclick="location.href=location.protocol==='file:'?'group.html':'/group'">👥 Группа</button>
+            <button type="button" class="nav-item active" onclick="location.href='/'">
+                <span class="nav-icon">📋</span> Задачи
+            </button>
+            <button type="button" class="nav-item" onclick="location.href='/calendar'">
+                <span class="nav-icon">📅</span> Календарь
+            </button>
+            <button type="button" class="nav-item" onclick="location.href='/group'">
+                <span class="nav-icon">👥</span> Группа
+            </button>
         </nav>
 
+        <!-- Модальное окно создания задачи -->
         <div class="modal-overlay" id="modalOverlay">
             <form class="modal-content" id="taskForm">
                 <div class="modal-header">
                     <button type="button" class="modal-back" id="closeModalBtn">‹</button>
                     <h3>Новая задача</h3>
                 </div>
-                <label class="field-label">Название задачи</label>
+                <label class="field-label" for="taskTitle">Название задачи</label>
                 <input type="text" id="taskTitle" placeholder="Подготовить отчет по практике" required>
-                <label class="field-label">Описание</label>
+
+                <label class="field-label" for="taskSubject">Описание</label>
                 <textarea id="taskSubject" placeholder="Описание" rows="2" required></textarea>
+
                 <label class="field-label">Приоритет</label>
                 <div class="priority-group" id="priorityGroup">
                     <button type="button" class="prio-btn" data-prio="high">Высокий</button>
                     <button type="button" class="prio-btn active" data-prio="medium">Средний</button>
                     <button type="button" class="prio-btn" data-prio="low">Низкий</button>
                 </div>
-                <label class="field-label">Дедлайн</label>
+
+                <label class="field-label" for="taskDeadline">Дедлайн</label>
                 <input type="datetime-local" id="taskDeadline" required>
-                <button type="submit" class="btn-primary">Создать задачу</button>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Создать задачу</button>
+                </div>
             </form>
         </div>
 
+        <!-- Экран деталей задачи -->
         <div class="modal-overlay" id="detailOverlay">
-            <div class="modal-content">
+            <div class="modal-content detail-content">
                 <div class="modal-header">
                     <button type="button" class="modal-back" id="closeDetailBtn">‹</button>
                     <h3>Детали задачи</h3>
                     <button type="button" class="icon-btn" id="deleteDetailBtn">🗑</button>
                 </div>
-                <div id="detailBody" style="display:flex;flex-direction:column;gap:10px;"></div>
+                <div class="detail-body" id="detailBody"></div>
             </div>
         </div>
     </div>
 
-    <script>
-        const API_URL = "/api/tasks";
-        let tasks = [], currentFilter = "all", selectedPriority = "medium", activeDetailTaskId = null;
-
-        const taskList = document.getElementById("taskList");
-        const modalOverlay = document.getElementById("modalOverlay");
-        const detailOverlay = document.getElementById("detailOverlay");
-
-        document.getElementById("openModalBtn").onclick = () => modalOverlay.classList.add("open");
-        document.getElementById("closeModalBtn").onclick = () => modalOverlay.classList.remove("open");
-        document.getElementById("closeDetailBtn").onclick = () => detailOverlay.classList.remove("open");
-
-        document.querySelectorAll(".prio-btn").forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll(".prio-btn").forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                selectedPriority = btn.dataset.prio;
-            };
-        });
-
-        document.querySelectorAll(".tab-btn").forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                currentFilter = btn.dataset.filter;
-                renderTasks();
-            };
-        });
-
-        function esc(s) {
-            return String(s).replace(/[&<>'"]/g, t => ({ "&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;" }[t]));
-        }
-
-        async function fetchTasks() {
-            try {
-                const res = await fetch(API_URL);
-                tasks = await res.json();
-                document.getElementById("currentCount").textContent = tasks.filter(t => !t.completed).length;
-                document.getElementById("completedCount").textContent = tasks.filter(t => t.completed).length;
-                renderTasks();
-            } catch (e) {
-                taskList.innerHTML = `<div class="empty-state">Запустите сервер: <b>python main.py</b> и откройте <b>http://127.0.0.1:8000</b></div>`;
-            }
-        }
-
-        function renderTasks() {
-            taskList.innerHTML = "";
-            const list = tasks.filter(t => currentFilter === "current" ? !t.completed : currentFilter === "completed" ? t.completed : true);
-            if (!list.length) {
-                taskList.innerHTML = `<div class="empty-state">Задач пока нет</div>`;
-                return;
-            }
-            const now = new Date();
-            list.forEach(task => {
-                const li = document.createElement("li");
-                const hrs = (new Date(task.deadline) - now) / 36e5;
-                const urg = !task.completed && task.deadline ? (hrs < 0 ? "deadline-danger" : hrs <= 24 ? "deadline-warning" : "") : "";
-                li.className = `task-card prio-${task.priority} ${urg} ${task.completed ? "completed-status" : ""}`;
-                li.innerHTML = `
-                    <input type="checkbox" class="task-checkbox" ${task.completed ? "checked" : ""}>
-                    <div class="task-main-content">
-                        <div class="task-title">${esc(task.title)}</div>
-                        <div class="task-subject">${esc(task.subject)}</div>
-                        <div class="task-footer">
-                            <span class="prio-tag prio-${task.priority}">${task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий'}</span>
-                            <span class="task-time-badge">${task.deadline.replace('T', ' ')}</span>
-                        </div>
-                    </div>
-                    <button type="button" class="del-btn">✕</button>
-                `;
-                li.querySelector(".task-checkbox").onclick = async (e) => {
-                    e.stopPropagation();
-                    await fetch(`${API_URL}/${task.id}/toggle`, { method: "PATCH" });
-                    fetchTasks();
-                };
-                li.querySelector(".del-btn").onclick = async (e) => {
-                    e.stopPropagation();
-                    await fetch(`${API_URL}/${task.id}`, { method: "DELETE" });
-                    fetchTasks();
-                };
-                li.onclick = () => {
-                    activeDetailTaskId = task.id;
-                    document.getElementById("detailBody").innerHTML = `
-                        <div class="detail-row"><span>Задача</span><strong>${esc(task.title)}</strong></div>
-                        <div class="detail-row"><span>Описание</span><span>${esc(task.subject)}</span></div>
-                        <div class="detail-row"><span>Дедлайн</span><span>${task.deadline.replace('T', ' ')}</span></div>
-                    `;
-                    detailOverlay.classList.add("open");
-                };
-                taskList.appendChild(li);
-            });
-        }
-
-        document.getElementById("deleteDetailBtn").onclick = async () => {
-            if (!activeDetailTaskId) return;
-            await fetch(`${API_URL}/${activeDetailTaskId}`, { method: "DELETE" });
-            detailOverlay.classList.remove("open");
-            fetchTasks();
-        };
-
-        document.getElementById("taskForm").onsubmit = async (e) => {
-            e.preventDefault();
-            const payload = {
-                title: document.getElementById("taskTitle").value.trim(),
-                subject: document.getElementById("taskSubject").value.trim(),
-                priority: selectedPriority,
-                deadline: document.getElementById("taskDeadline").value
-            };
-            await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            modalOverlay.classList.remove("open");
-            e.target.reset();
-            fetchTasks();
-        };
-
-        fetchTasks();
-    </script>
+    <script src="static/app.js"></script>
 </body>
 </html>

@@ -30,10 +30,6 @@ def test_ui_urgency_colors_and_filters(live_server):
     now = datetime.now()
     fmt = "%Y-%m-%dT%H:%M"
 
-    # Подготавливаем 3 задачи с разными сроками:
-    # 1. Просроченная (-2 часа) -> класс deadline-danger
-    # 2. Горящая (+5 часов, <= 24ч) -> класс deadline-warning
-    # 3. Обычная (+3 дня) -> без классов предупреждения
     tasks_seed = [
         {
             "id": 1,
@@ -41,7 +37,7 @@ def test_ui_urgency_colors_and_filters(live_server):
             "subject": "Матан",
             "priority": "high",
             "deadline": (now - timedelta(hours=2)).strftime(fmt),
-            "completed": False
+            "completed": False,
         },
         {
             "id": 2,
@@ -49,7 +45,7 @@ def test_ui_urgency_colors_and_filters(live_server):
             "subject": "Программирование",
             "priority": "medium",
             "deadline": (now + timedelta(hours=5)).strftime(fmt),
-            "completed": False
+            "completed": False,
         },
         {
             "id": 3,
@@ -57,8 +53,8 @@ def test_ui_urgency_colors_and_filters(live_server):
             "subject": "Английский",
             "priority": "low",
             "deadline": (now + timedelta(days=3)).strftime(fmt),
-            "completed": False
-        }
+            "completed": False,
+        },
     ]
     main.save_tasks(tasks_seed)
 
@@ -70,30 +66,25 @@ def test_ui_urgency_colors_and_filters(live_server):
         cards = page.locator(".task-card")
         assert cards.count() == 3
 
-        # Проверка цветовых классов из app.js
         assert "deadline-danger" in cards.nth(0).get_attribute("class")
         assert "deadline-warning" in cards.nth(1).get_attribute("class")
         assert "deadline-danger" not in cards.nth(2).get_attribute("class")
         assert "deadline-warning" not in cards.nth(2).get_attribute("class")
 
-        # Проверка счетчиков (3 текущие, 0 выполненных)
         assert page.locator("#currentCount").inner_text() == "3"
         assert page.locator("#completedCount").inner_text() == "0"
 
-        # Кликаем по чекбоксу первой задачи
         cards.nth(0).locator(".task-checkbox").click()
         page.wait_for_timeout(300)
 
         assert page.locator("#currentCount").inner_text() == "2"
         assert page.locator("#completedCount").inner_text() == "1"
 
-        # Проверка вкладки "Выполненные"
         page.locator('.tab-btn[data-filter="completed"]').click()
         page.wait_for_timeout(300)
         assert page.locator(".task-card").count() == 1
         assert "Просроченный долг" in page.locator(".task-card").nth(0).inner_text()
 
-        # Проверка защиты от XSS (escapeHTML в app.js)
         page.locator("#openModalBtn").click()
         page.fill("#taskTitle", "<script>alert('XSS')</script>")
         page.fill("#taskSubject", "Безопасность")

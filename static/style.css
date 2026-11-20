@@ -765,4 +765,47 @@ body {
     .stat-num { font-size: 22px; }
     .tabs { padding: 12px 14px 4px; gap: 6px; }
     .task-list { padding: 10px 14px 90px; }
-    .calendar-widget { margin: 12
+    .calendar-widget { margin: 12px 14px 0; padding: 12px; }
+    .group-stats { gap: 8px; padding: 12px 14px 0; }
+    .group-stat-num { font-size: 20px; }
+    .calendar-section-title,
+    .group-section-title { padding: 0 14px; }
+    .member-list { padding: 0 14px 90px; }
+}
+
+/* ===== Адаптив: ландшафт на телефоне ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+    .phone-container {
+        height: auto;
+        min-height: 100dvh;
+    }
+    .bottom-nav {
+        position: sticky;
+    }
+}
+
+/* ===== Адаптив: планшеты и десктоп ===== */
+@media (min-width: 768px) {
+    body {
+        align-items: center;
+        padding: 24px 0;
+    }
+    .phone-container {
+        height: min(900px, calc(100dvh - 48px));
+        min-height: 0;
+        border-radius: 28px;
+        border: 8px solid #1e293b;
+        overflow: hidden;
+    }
+    .bottom-nav {
+        border-radius: 0 0 20px 20px;
+    }
+}
+
+/* ===== Доступность: уменьшение анимаций ===== */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+}

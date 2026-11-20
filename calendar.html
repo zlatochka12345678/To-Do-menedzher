@@ -104,11 +104,11 @@
             <div class="header-inner">
                 <div class="brand">
                     <span class="brand-strong">IT.</span><span class="brand-light">TEAM</span>
-                    <button class="notif-btn" aria-label="Уведомления">🔔</button>
+                    <button type="button" class="notif-btn" id="notifBtn" aria-label="Уведомления">🔔</button>
                 </div>
                 <div class="main-nav">
                     <h1>Календарь</h1>
-                    <button class="small-btn" id="todayBtn">Сегодня</button>
+                    <button type="button" class="small-btn" id="todayBtn">Сегодня</button>
                 </div>
             </div>
         </header>
@@ -118,8 +118,8 @@
                 <div class="calendar-header">
                     <span class="calendar-month" id="calendarMonth">Ноябрь 2026</span>
                     <div class="calendar-nav">
-                        <button class="calendar-arrow" id="prevMonth">‹</button>
-                        <button class="calendar-arrow" id="nextMonth">›</button>
+                        <button type="button" class="calendar-arrow" id="prevMonth">‹</button>
+                        <button type="button" class="calendar-arrow" id="nextMonth">›</button>
                     </div>
                 </div>
                 <div class="calendar-grid" id="calendarGrid"></div>
@@ -127,7 +127,7 @@
 
             <div class="calendar-tasks-pane">
                 <div class="calendar-section-header">
-                    <div class="calendar-section-title" id="calendarDayTitle">18 ноября • сегодня</div>
+                    <div class="calendar-section-title" id="calendarDayTitle">20 ноября • сегодня</div>
                     <span class="calendar-day-count" id="calendarDayCount"></span>
                 </div>
                 <ul class="task-list calendar-task-list" id="calendarTaskList"></ul>
@@ -135,23 +135,18 @@
         </main>
 
         <nav class="bottom-nav">
-            <button class="nav-item" onclick="goPage('/', 'index.html')">
+            <button type="button" class="nav-item" onclick="location.href='index.html'">
                 <span class="nav-icon">📋</span> Задачи
             </button>
-            <button class="nav-item active" onclick="goPage('/calendar', 'calendar.html')">
+            <button type="button" class="nav-item active" onclick="location.href='calendar.html'">
                 <span class="nav-icon">📅</span> Календарь
             </button>
-            <button class="nav-item" onclick="goPage('/group', 'group.html')">
+            <button type="button" class="nav-item" onclick="location.href='group.html'">
                 <span class="nav-icon">👥</span> Группа
             </button>
         </nav>
     </div>
 
-    <script>
-        function goPage(serverPath, filePath) {
-            window.location.href = window.location.protocol === "file:" ? filePath : serverPath;
-        }
-    </script>
-    <script src="static/calendar.js?v=3"></script>
+    <script src="static/calendar.js"></script>
 </body>
 </html>

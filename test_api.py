@@ -22,7 +22,7 @@ def test_create_task_and_persistence(isolated_db):
         "title": "Сдать отчет по практике",
         "subject": "Производственная практика",
         "priority": "high",
-        "deadline": "2026-11-20T18:00"
+        "deadline": "2026-11-20T18:00",
     }
     response = client.post("/api/tasks", json=payload)
     assert response.status_code == 200
@@ -34,19 +34,17 @@ def test_create_task_and_persistence(isolated_db):
     assert data["completed"] is False
     assert isinstance(data["id"], int)
 
-    # Проверяем, что задача реально сохранилась в JSON-файл
     get_res = client.get("/api/tasks")
     assert len(get_res.json()) == 1
 
 
 def test_get_tasks_smart_sorting():
-    # Добавляем задачи вразнобой: дальний дедлайн, ближний дедлайн и уже выполненную
     t_far = client.post("/api/tasks", json={
         "title": "Курсовая работа",
         "subject": "Базы данных",
         "priority": "high",
         "deadline": "2026-12-10T12:00",
-        "completed": False
+        "completed": False,
     }).json()
 
     t_soon = client.post("/api/tasks", json={
@@ -54,7 +52,7 @@ def test_get_tasks_smart_sorting():
         "subject": "Физика",
         "priority": "medium",
         "deadline": "2026-11-18T10:00",
-        "completed": False
+        "completed": False,
     }).json()
 
     t_done = client.post("/api/tasks", json={
@@ -62,14 +60,13 @@ def test_get_tasks_smart_sorting():
         "subject": "История",
         "priority": "low",
         "deadline": "2026-11-01T10:00",
-        "completed": True
+        "completed": True,
     }).json()
 
     response = client.get("/api/tasks")
     assert response.status_code == 200
     tasks = response.json()
 
-    # Ожидаемый порядок из main.py: сначала невыполненные по возрастанию дедлайна, выполненные — внизу
     assert [t["id"] for t in tasks] == [t_soon["id"], t_far["id"], t_done["id"]]
 
 
@@ -78,16 +75,14 @@ def test_toggle_task_completion():
         "title": "Подготовить презентацию",
         "subject": "Экономика",
         "priority": "medium",
-        "deadline": "2026-11-25T14:00"
+        "deadline": "2026-11-25T14:00",
     }).json()
     task_id = created["id"]
 
-    # Отмечаем выполненной
     res_1 = client.patch(f"/api/tasks/{task_id}/toggle")
     assert res_1.status_code == 200
     assert res_1.json()["completed"] is True
 
-    # Снимаем отметку
     res_2 = client.patch(f"/api/tasks/{task_id}/toggle")
     assert res_2.status_code == 200
     assert res_2.json()["completed"] is False
@@ -104,7 +99,7 @@ def test_delete_task():
         "title": "Удаляемая задача",
         "subject": "Физкультура",
         "priority": "low",
-        "deadline": "2026-11-30T09:00"
+        "deadline": "2026-11-30T09:00",
     }).json()
     task_id = created["id"]
 
@@ -112,7 +107,6 @@ def test_delete_task():
     assert del_res.status_code == 200
     assert del_res.json() == {"status": "success"}
 
-    # Повторное удаление должно вернуть 404
     assert client.delete(f"/api/tasks/{task_id}").status_code == 404
 
 

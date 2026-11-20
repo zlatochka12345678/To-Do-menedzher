@@ -1,156 +1,125 @@
-const STORAGE_KEY = "it_team_tasks_storage";
-let activeFilter = "all";
-let allTasks = [];
+const API_URL = "/api/tasks";
+
+let tasks = [];
+let currentFilter = "all";
 let selectedPriority = "medium";
+let activeDetailTaskId = null;
 
 const taskList = document.getElementById("taskList");
-const taskForm = document.getElementById("taskForm");
+const currentCount = document.getElementById("currentCount");
+const completedCount = document.getElementById("completedCount");
 const modalOverlay = document.getElementById("modalOverlay");
 const detailOverlay = document.getElementById("detailOverlay");
 const detailBody = document.getElementById("detailBody");
+const taskForm = document.getElementById("taskForm");
 const priorityGroup = document.getElementById("priorityGroup");
 
-const prioLabels = { high: "Высокий", medium: "Средний", low: "Низкий" };
-
-// Загрузка задач из localStorage браузера
-function loadFromStorage() {
-    try {
-        const data = localStorage.getItem(STORAGE_KEY);
-        return data ? JSON.parse(data) : [];
-    } catch (e) {
-        return [];
-    }
-}
-
-// Сохранение задач в localStorage браузера
-function saveToStorage(tasks) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-}
-
-// Сортировка: сначала текущие по дедлайну, потом выполненные (как было в main.py)
-function sortTasks(tasks) {
-    return [...tasks].sort((a, b) => {
-        if (Boolean(a.completed) !== Boolean(b.completed)) {
-            return a.completed ? 1 : -1;
-        }
-        const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-        const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-        return dateA - dateB;
-    });
-}
-
+// Открытие и закрытие модального окна создания задачи
 document.getElementById("openModalBtn").addEventListener("click", () => {
     modalOverlay.classList.add("open");
 });
+
 document.getElementById("closeModalBtn").addEventListener("click", () => {
     modalOverlay.classList.remove("open");
 });
+
+modalOverlay.addEventListener("click", (e) => {
+    if (e.target === modalOverlay) modalOverlay.classList.remove("open");
+});
+
+// Закрытие окна деталей задачи
 document.getElementById("closeDetailBtn").addEventListener("click", () => {
     detailOverlay.classList.remove("open");
 });
 
-priorityGroup.addEventListener("click", (e) => {
-    const btn = e.target.closest(".prio-btn");
-    if (!btn) return;
-    priorityGroup.querySelectorAll(".prio-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    selectedPriority = btn.dataset.prio;
+detailOverlay.addEventListener("click", (e) => {
+    if (e.target === detailOverlay) detailOverlay.classList.remove("open");
 });
 
-function fetchTasks() {
-    allTasks = sortTasks(loadFromStorage());
-    renderTasks(allTasks);
+// Удаление задачи из окна деталей
+document.getElementById("deleteDetailBtn").addEventListener("click", async () => {
+    if (!activeDetailTaskId) return;
+    await deleteTask(activeDetailTaskId);
+    detailOverlay.classList.remove("open");
+});
+
+// Выбор приоритета в форме
+priorityGroup.querySelectorAll(".prio-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        priorityGroup.querySelectorAll(".prio-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedPriority = btn.dataset.prio;
+    });
+});
+
+// Переключение вкладок фильтрации (Все / Текущие / Выполненные)
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        renderTasks();
+    });
+});
+
+// Уведомления
+const notifBtn = document.getElementById("notifBtn");
+if (notifBtn) {
+    notifBtn.addEventListener("click", () => {
+        const urgent = tasks.filter((t) => !t.completed && new Date(t.deadline) - new Date() <= 86400000);
+        alert(urgent.length > 0 ? `Срочных задач (до 24ч или просрочено): ${urgent.length}` : "Горящих задач нет!");
+    });
 }
 
-taskForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    
-    const title = document.getElementById("taskTitle").value.trim();
-    const subject = document.getElementById("taskSubject").value.trim();
-    const deadline = document.getElementById("taskDeadline").value;
-
-    if (!title || !subject || !deadline) return;
-
-    const currentTasks = loadFromStorage();
-    const newTask = {
-        id: Date.now(),
-        title,
-        subject,
-        priority: selectedPriority,
-        deadline,
-        completed: false
-    };
-
-    currentTasks.push(newTask);
-    saveToStorage(currentTasks);
-
-    modalOverlay.classList.remove("open");
-    taskForm.reset();
-    selectedPriority = "medium";
-    priorityGroup.querySelectorAll(".prio-btn").forEach((b) => b.classList.remove("active"));
-    priorityGroup.querySelector('[data-prio="medium"]').classList.add("active");
-    
-    fetchTasks();
-});
-
-window.toggleTask = function (id, event) {
-    if (event) event.stopPropagation();
-    const currentTasks = loadFromStorage();
-    const task = currentTasks.find((t) => t.id === id);
-    if (task) {
-        task.completed = !task.completed;
-        saveToStorage(currentTasks);
-        fetchTasks();
+// Загрузка задач с сервера
+async function fetchTasks() {
+    try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error("Ошибка загрузки");
+        tasks = await res.json();
+        updateCounters();
+        renderTasks();
+    } catch (err) {
+        console.error(err);
+        taskList.innerHTML = `<div class="empty-state">Запустите сервер командой <b>python main.py</b> и откройте <b>http://127.0.0.1:8000</b></div>`;
     }
-};
+}
 
-window.deleteTask = function (id, event) {
-    if (event) event.stopPropagation();
-    const currentTasks = loadFromStorage().filter((t) => t.id !== id);
-    saveToStorage(currentTasks);
-    detailOverlay.classList.remove("open");
-    fetchTasks();
-};
+function updateCounters() {
+    const active = tasks.filter((t) => !t.completed).length;
+    const done = tasks.filter((t) => t.completed).length;
+    currentCount.textContent = active;
+    completedCount.textContent = done;
+}
 
-window.openDetails = function (id) {
-    const task = allTasks.find((t) => t.id === id);
-    if (!task) return;
+function escapeHTML(str) {
+    return String(str).replace(/[&<>'"]/g, (tag) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "'", '"': "&quot;" }[tag] || tag)
+    );
+}
 
-    const deadline = new Date(task.deadline);
-    const formatted = deadline.toLocaleString("ru-RU", {
-        day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
+function formatDeadline(isoStr) {
+    if (!isoStr) return "Без срока";
+    const dt = new Date(isoStr);
+    if (isNaN(dt)) return isoStr;
+    return dt.toLocaleString("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+function renderTasks() {
+    taskList.innerHTML = "";
+    const filtered = tasks.filter((t) => {
+        if (currentFilter === "current") return !t.completed;
+        if (currentFilter === "completed") return t.completed;
+        return true;
     });
 
-    detailBody.innerHTML = `
-        <div class="detail-row"><span>Приоритет</span><span class="prio-tag prio-${task.priority}">${prioLabels[task.priority]}</span></div>
-        <div class="detail-row"><span>Дедлайн</span><span>${formatted}</span></div>
-        <div class="detail-row"><span>Статус</span><span>${task.completed ? "Выполнено" : "В работе"}</span></div>
-        <div class="detail-row"><span>Описание</span><span>${escapeHTML(task.subject)}</span></div>
-        <button class="btn btn-primary" onclick="toggleTask(${task.id}); document.getElementById('detailOverlay').classList.remove('open');">
-            ${task.completed ? "Вернуть в работу" : "Отметить выполненной"}
-        </button>
-        <button class="btn btn-cancel" onclick="deleteTask(${task.id})">Удалить задачу</button>
-    `;
-    detailOverlay.classList.add("open");
-};
-
-function updateCounters(tasks) {
-    const current = tasks.filter((t) => !t.completed).length;
-    const completed = tasks.filter((t) => t.completed).length;
-    document.getElementById("currentCount").textContent = current;
-    document.getElementById("completedCount").textContent = completed;
-}
-
-function renderTasks(tasks) {
-    taskList.innerHTML = "";
-    updateCounters(tasks);
-
-    let filtered = tasks;
-    if (activeFilter === "current") filtered = tasks.filter((t) => !t.completed);
-    if (activeFilter === "completed") filtered = tasks.filter((t) => t.completed);
-
     if (filtered.length === 0) {
-        taskList.innerHTML = `<div class="empty-state">Задач в этом разделе нет</div>`;
+        taskList.innerHTML = `<div class="empty-state">Задач в этой категории пока нет</div>`;
         return;
     }
 
@@ -158,53 +127,124 @@ function renderTasks(tasks) {
 
     filtered.forEach((task) => {
         const li = document.createElement("li");
-        li.className = `task-card prio-${task.priority} ${task.completed ? "completed-status" : ""}`;
-        li.addEventListener("click", () => openDetails(task.id));
+        let urgencyClass = "";
+        let timeBadgeClass = "";
 
-        let timeClass = "";
-        let timeText = "";
-
-        if (!task.completed) {
-            const deadline = new Date(task.deadline);
-            const hoursLeft = (deadline - now) / (1000 * 60 * 60);
-            if (hoursLeft < 0) { li.classList.add("deadline-danger"); timeClass = "overdue"; }
-            else if (hoursLeft <= 24) { li.classList.add("deadline-warning"); timeClass = "soon"; }
-
-            timeText = deadline.toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-        } else {
-            timeText = "Выполнено";
+        if (!task.completed && task.deadline) {
+            const hoursLeft = (new Date(task.deadline) - now) / (1000 * 60 * 60);
+            if (hoursLeft < 0) {
+                urgencyClass = "deadline-danger";
+                timeBadgeClass = "overdue";
+            } else if (hoursLeft <= 24) {
+                urgencyClass = "deadline-warning";
+                timeBadgeClass = "soon";
+            }
         }
 
+        li.className = `task-card prio-${task.priority} ${urgencyClass} ${task.completed ? "completed-status" : ""}`;
+
+        const prioText = task.priority === "high" ? "Высокий" : task.priority === "medium" ? "Средний" : "Низкий";
+
         li.innerHTML = `
-            <input type="checkbox" class="task-checkbox" ${task.completed ? "checked" : ""}
-                   onclick="toggleTask(${task.id}, event)" aria-label="Отметить выполненной">
+            <input type="checkbox" class="task-checkbox" ${task.completed ? "checked" : ""}>
             <div class="task-main-content">
                 <div class="task-title">${escapeHTML(task.title)}</div>
                 <div class="task-subject">${escapeHTML(task.subject)}</div>
                 <div class="task-footer">
-                    <span class="prio-tag prio-${task.priority}">${prioLabels[task.priority]}</span>
-                    <span class="task-time-badge ${timeClass}">${timeText}</span>
+                    <span class="prio-tag prio-${task.priority}">${prioText}</span>
+                    <span class="task-time-badge ${timeBadgeClass}">${formatDeadline(task.deadline)}</span>
                 </div>
             </div>
-            <button class="del-btn" onclick="deleteTask(${task.id}, event)" aria-label="Удалить">&times;</button>
+            <button type="button" class="del-btn" title="Удалить">✕</button>
         `;
+
+        // Переключение статуса выполнения
+        li.querySelector(".task-checkbox").addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleTask(task.id);
+        });
+
+        // Быстрое удаление
+        li.querySelector(".del-btn").addEventListener("click", (e) => {
+            e.stopPropagation();
+            deleteTask(task.id);
+        });
+
+        // Открытие деталей задачи при клике на карточку
+        li.addEventListener("click", () => openTaskDetails(task));
+
         taskList.appendChild(li);
     });
 }
 
-function escapeHTML(str) {
-    return str.replace(/[&<>'"]/g, (tag) =>
-        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[tag] || tag)
-    );
+function openTaskDetails(task) {
+    activeDetailTaskId = task.id;
+    const prioText = task.priority === "high" ? "Высокий" : task.priority === "medium" ? "Средний" : "Низкий";
+    detailBody.innerHTML = `
+        <div class="detail-row"><span>Задача</span><strong>${escapeHTML(task.title)}</strong></div>
+        <div class="detail-row"><span>Описание</span><span>${escapeHTML(task.subject)}</span></div>
+        <div class="detail-row"><span>Приоритет</span><span>${prioText}</span></div>
+        <div class="detail-row"><span>Дедлайн</span><span>${formatDeadline(task.deadline)}</span></div>
+        <div class="detail-row"><span>Статус</span><span>${task.completed ? "Выполнено" : "В работе"}</span></div>
+    `;
+    detailOverlay.classList.add("open");
 }
 
-document.querySelectorAll(".tab-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-        e.target.classList.add("active");
-        activeFilter = e.target.getAttribute("data-filter");
-        renderTasks(allTasks);
-    });
+async function toggleTask(id) {
+    try {
+        const res = await fetch(`${API_URL}/${id}/toggle`, { method: "PATCH" });
+        if (res.ok) fetchTasks();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function deleteTask(id) {
+    try {
+        const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+        if (res.ok) fetchTasks();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// Создание новой задачи
+taskForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const title = document.getElementById("taskTitle").value.trim();
+    const subject = document.getElementById("taskSubject").value.trim();
+    const deadline = document.getElementById("taskDeadline").value;
+
+    if (!title || !subject || !deadline) {
+        alert("Пожалуйста, заполните все поля!");
+        return;
+    }
+
+    const payload = { title, subject, priority: selectedPriority, deadline };
+
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || "Ошибка сервера");
+        }
+
+        modalOverlay.classList.remove("open");
+        taskForm.reset();
+        selectedPriority = "medium";
+        priorityGroup.querySelectorAll(".prio-btn").forEach((b) => b.classList.remove("active"));
+        priorityGroup.querySelector('[data-prio="medium"]').classList.add("active");
+
+        fetchTasks();
+    } catch (error) {
+        alert("Не удалось сохранить задачу. Причина: " + error.message);
+    }
 });
 
 fetchTasks();

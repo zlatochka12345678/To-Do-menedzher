@@ -135,18 +135,23 @@
         </main>
 
         <nav class="bottom-nav">
-            <button class="nav-item" onclick="location.href='/'">
+            <button class="nav-item" onclick="goPage('/', 'index.html')">
                 <span class="nav-icon">📋</span> Задачи
             </button>
-            <button class="nav-item active" onclick="location.href='/calendar'">
+            <button class="nav-item active" onclick="goPage('/calendar', 'calendar.html')">
                 <span class="nav-icon">📅</span> Календарь
             </button>
-            <button class="nav-item" onclick="location.href='/group'">
+            <button class="nav-item" onclick="goPage('/group', 'group.html')">
                 <span class="nav-icon">👥</span> Группа
             </button>
         </nav>
     </div>
 
+    <script>
+        function goPage(serverPath, filePath) {
+            window.location.href = window.location.protocol === "file:" ? filePath : serverPath;
+        }
+    </script>
     <script src="static/calendar.js?v=3"></script>
 </body>
 </html>

@@ -41,19 +41,24 @@
             <ul class="member-list" id="memberList"></ul>
         </main>
 
-        <nav class="bottom-nav">
-            <button class="nav-item" onclick="location.href='/'">
+                <nav class="bottom-nav">
+            <button class="nav-item" onclick="goPage('/', 'index.html')">
                 <span class="nav-icon">📋</span> Задачи
             </button>
-            <button class="nav-item" onclick="location.href='/calendar'">
+            <button class="nav-item" onclick="goPage('/calendar', 'calendar.html')">
                 <span class="nav-icon">📅</span> Календарь
             </button>
-            <button class="nav-item active" onclick="location.href='/group'">
+            <button class="nav-item active" onclick="goPage('/group', 'group.html')">
                 <span class="nav-icon">👥</span> Группа
             </button>
         </nav>
     </div>
 
+    <script>
+        function goPage(serverPath, filePath) {
+            window.location.href = window.location.protocol === "file:" ? filePath : serverPath;
+        }
+    </script>
     <script src="static/group.js"></script>
 </body>
 </html>

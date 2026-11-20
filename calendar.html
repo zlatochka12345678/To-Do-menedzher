@@ -6,84 +6,72 @@
     <title>IT.TEAM — Календарь</title>
     <link rel="stylesheet" href="static/style.css">
     <style>
-        #calendarGrid {
-            display: grid !important;
-            grid-template-columns: repeat(7, 1fr) !important;
-            gap: 6px !important;
-            align-items: center;
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
         }
         .cal-weekday {
             text-align: center;
             font-size: 12px;
             font-weight: 600;
-            opacity: 0.5;
-            padding: 8px 0;
+            color: var(--text-muted);
+            padding: 6px 0;
         }
         .cal-day {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            min-height: 48px !important;
-            height: auto !important;
-            padding: 8px 4px !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 6px 2px;
             border-radius: 12px;
             cursor: pointer;
-            overflow: visible !important;
             position: relative;
+            font-size: 14px;
+            color: var(--text-main);
         }
         .cal-day.other-month {
-            opacity: 0.3;
+            opacity: 0.25;
             cursor: default;
         }
         .cal-day.today:not(.selected) {
-            border: 1.5px solid #3b82f6;
+            border: 1.5px solid var(--accent-blue);
             font-weight: 700;
         }
         .cal-day.selected {
-            background-color: #3b82f6 !important;
-            color: #ffffff !important;
+            background-color: var(--accent-blue);
+            color: #ffffff;
             font-weight: 700;
         }
-        .cal-day-num {
-            line-height: 1.2;
-            font-size: 14px;
-        }
         .cal-dots {
-            display: flex !important;
+            display: flex;
             justify-content: center;
-            align-items: center;
             gap: 3px;
-            height: 7px;
+            height: 6px;
             margin-top: 4px;
         }
         .cal-dot {
-            width: 5px !important;
-            height: 5px !important;
-            border-radius: 50% !important;
-            display: inline-block !important;
-            flex-shrink: 0;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background-color: var(--priority-medium);
         }
-        .cal-dot.overdue { background-color: #ef4444 !important; }
-        .cal-dot.soon { background-color: #f59e0b !important; }
-        .cal-dot.active { background-color: #3b82f6 !important; }
-        .cal-dot.completed { background-color: #10b981 !important; }
-
+        .cal-dot.completed {
+            background-color: var(--priority-low);
+        }
         .cal-day.selected .cal-dot {
-            box-shadow: 0 0 0 1px #ffffff;
+            background-color: #ffffff;
         }
         .calendar-section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 20px 0 12px;
-        }
-        .calendar-section-header .calendar-section-title {
-            margin: 0 !important;
+            margin: 18px 0 12px;
         }
         .calendar-day-count {
             font-size: 13px;
-            opacity: 0.6;
+            color: var(--text-muted);
         }
         @media (min-width: 768px) {
             .calendar-layout {
@@ -101,20 +89,18 @@
 <body>
     <div class="app-wrapper">
         <header class="app-header">
-            <div class="header-inner">
-                <div class="brand">
-                    <span class="brand-strong">IT.</span><span class="brand-light">TEAM</span>
-                    <button type="button" class="notif-btn" id="notifBtn" aria-label="Уведомления">🔔</button>
-                </div>
-                <div class="main-nav">
-                    <h1>Календарь</h1>
-                    <button type="button" class="small-btn" id="todayBtn">Сегодня</button>
-                </div>
+            <div class="brand">
+                <span class="brand-strong">IT.</span><span class="brand-light">TEAM</span>
+                <button type="button" class="notif-btn" id="notifBtn" aria-label="Уведомления">🔔</button>
+            </div>
+            <div class="main-nav">
+                <h1>Календарь</h1>
+                <button type="button" class="small-btn" id="todayBtn">Сегодня</button>
             </div>
         </header>
 
         <main class="main-content calendar-layout">
-            <div class="calendar-widget" id="calendarWidget">
+            <div class="calendar-widget">
                 <div class="calendar-header">
                     <span class="calendar-month" id="calendarMonth">Ноябрь 2026</span>
                     <div class="calendar-nav">
@@ -127,7 +113,7 @@
 
             <div class="calendar-tasks-pane">
                 <div class="calendar-section-header">
-                    <div class="calendar-section-title" id="calendarDayTitle">20 ноября • сегодня</div>
+                    <div class="calendar-section-title" id="calendarDayTitle">Сегодня</div>
                     <span class="calendar-day-count" id="calendarDayCount"></span>
                 </div>
                 <ul class="task-list calendar-task-list" id="calendarTaskList"></ul>
@@ -135,15 +121,15 @@
         </main>
 
         <nav class="bottom-nav">
-            <button type="button" class="nav-item" onclick="location.href='index.html'">
+            <a class="nav-item" href="index.html">
                 <span class="nav-icon">📋</span> Задачи
-            </button>
-            <button type="button" class="nav-item active" onclick="location.href='calendar.html'">
+            </a>
+            <a class="nav-item active" href="calendar.html">
                 <span class="nav-icon">📅</span> Календарь
-            </button>
-            <button type="button" class="nav-item" onclick="location.href='group.html'">
+            </a>
+            <a class="nav-item" href="group.html">
                 <span class="nav-icon">👥</span> Группа
-            </button>
+            </a>
         </nav>
     </div>
 
